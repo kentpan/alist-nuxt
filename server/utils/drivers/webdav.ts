@@ -123,10 +123,10 @@ export function createWebDavAdapter(options: WebDavOptions) {
       await request('COPY', virtualPath, { headers: { Destination: urlFor(destination).toString(), Overwrite: overwrite ? 'T' : 'F', Depth: 'infinity' } })
     },
     async remove(virtualPath: string) { await request('DELETE', virtualPath) },
-    async openRead(virtualPath: string) {
-      const response = await request('GET', virtualPath)
+    async openRead(virtualPath: string, range?: string) {
+      const response = await request('GET', virtualPath, { headers: range ? { Range: range } : {} })
       if (!response.body) throw new Error('WebDAV response has no readable body')
-      return { stream: response.body, file: await this.get(virtualPath) }
+      return { stream: response.body, file: await this.get(virtualPath), status: response.status, headers: response.headers }
     }
   }
 }
