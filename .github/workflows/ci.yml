@@ -1,0 +1,32 @@
+name: Stage 1 - Runtime foundation CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test local Node SQLite and D1 adapter contracts
+        run: npm test
+      - name: Validate Prisma schema
+        env:
+          DATABASE_URL: file:./data/ci.db
+        run: npx prisma validate
+      - name: Type check
+        run: npx nuxt typecheck
+      - name: Build Node server
+        env:
+          DATABASE_PATH: ./data/ci.db
+        run: npm run build

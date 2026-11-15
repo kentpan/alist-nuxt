@@ -1,0 +1,26 @@
+CREATE TABLE "Setting" (
+  "key" TEXT NOT NULL PRIMARY KEY,
+  "value" TEXT NOT NULL,
+  "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE "User" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "username" TEXT NOT NULL,
+  "passwordHash" TEXT NOT NULL,
+  "role" TEXT NOT NULL DEFAULT 'user',
+  "disabled" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+CREATE TABLE "Storage" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "mountPath" TEXT NOT NULL,
+  "driver" TEXT NOT NULL,
+  "addition" TEXT NOT NULL DEFAULT '{}',
+  "order" INTEGER NOT NULL DEFAULT 0,
+  "disabled" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX "Storage_mountPath_key" ON "Storage"("mountPath");
