@@ -30,6 +30,8 @@ try {
   await page.getByText('browser-test.txt', { exact: true }).waitFor()
 
   await page.getByText('browser-test.txt', { exact: true }).click()
+  await page.getByText('文件预览：browser-test.txt', { exact: true }).waitFor({ timeout: 10000 })
+  await page.getByText('Browser interaction test', { exact: true }).waitFor({ timeout: 10000 })
   await page.getByLabel('新名称').fill('browser-renamed.txt')
   await page.getByRole('button', { name: '重命名' }).click()
   await page.getByText('browser-renamed.txt', { exact: true }).waitFor()
@@ -40,7 +42,7 @@ try {
   await page.getByText('browser-renamed.txt', { exact: true }).waitFor({ state: 'detached' })
 
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`)
-  process.stdout.write('Stage 4 browser test passed: login, folder creation, upload, rename and delete.\n')
+  process.stdout.write('Stage 5 browser test passed: login, folder creation, upload, signed text preview, rename and delete.\n')
 } finally {
   await browser.close()
 }
