@@ -1,0 +1,64 @@
+name: Stage 3 - Local storage API integration
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/utils/storage.ts'
+      - 'server/api/fs/**'
+      - 'server/api/admin/storage/**'
+      - 'scripts/seed-storage.mjs'
+      - 'scripts/smoke-storage.mjs'
+      - '.github/workflows/stage3-storage.yml'
+permissions:
+  contents: read
+jobs:
+  local-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Unit tests, schema, types and build
+        env:
+          DATABASE_URL: file:../data/ci.db
+        run: |
+          set -euo pipefail
+          npm test
+          npx prisma validate
+          npx nuxt typecheck
+          npm run build
+      - name: Migrate and seed isolated CI database
+        env:
+          DATABASE_URL: file:../data/ci.db
+          DATABASE_PATH: ./data/ci.db
+          LOCAL_STORAGE_ROOT: ./data/storage
+          BOOTSTRAP_ADMIN_USERNAME: admin
+          BOOTSTRAP_ADMIN_PASSWORD: stage3-ci-only-password
+          ALLOW_REGISTER: 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          npm run db:migrate
+          npm run db:seed
+          node scripts/seed-storage.mjs
+      - name: Exercise real local filesystem APIs
+        env:
+          NUXT_DATABASE_PATH: ./data/ci.db
+          NUXT_JWT_SECRET: stage3-ci-only-jwt-secret
+          BOOTSTRAP_ADMIN_PASSWORD: stage3-ci-only-password
+          NITRO_HOST: 127.0.0.1
+          NITRO_PORT: 3000
+        run: |
+          set -euo pipefail
+          node .output/server/index.mjs > /tmp/alist-stage3-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/smoke-storage.mjs

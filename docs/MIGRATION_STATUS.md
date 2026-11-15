@@ -24,5 +24,11 @@
 
 The auth routes are not yet fully equivalent: LDAP, SSO, WebAuthn/passkeys, SSH keys, full session-management endpoints and every admin user/role edge case remain open. Run the CI suite before marking Stage 2 complete.
 
+## Stage 3 — local storage and core filesystem APIs: implementation started
+- Added a local filesystem driver with mount-path routing, symlink/path-traversal protection, hidden-file filtering, metadata, list/get, mkdir, rename, move, copy, remove, streaming upload and download.
+- Added admin storage list/create endpoints for local mounts.
+- Unit tests cover path traversal, symlink escape prevention and local file operations; CI typecheck/build and isolated HTTP integration tests are required before marking this stage validated.
+- This first driver is Node-only. Cloudflare Edge needs an object-storage driver (for example R2) and D1-compatible storage metadata; that adapter is not yet implemented.
+
 ## Not yet migrated
-Authentication, permissions, storage drivers, file APIs, WebDAV, search, task execution, previews/media, administration UI, internationalization, and deployment remain unimplemented and must be tracked in later stages.
+The other 90 upstream drivers, complete storage administration, WebDAV, S3/FTP/SFTP protocols, search, task execution, previews/media, full administration UI, internationalization, and deployment remain open.

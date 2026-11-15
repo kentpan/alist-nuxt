@@ -57,7 +57,7 @@ Total upstream driver packages: **91**.
 - [ ] `lanzou` — not migrated
 - [ ] `lark` — not migrated
 - [ ] `lenovonas_share` — not migrated
-- [ ] `local` — not migrated
+- [x] `local` — partial: Node local filesystem adapter and core file operations; full upstream parity and Edge adapter remain open
 - [ ] `mediafire` — not migrated
 - [ ] `mediatrack` — not migrated
 - [ ] `mega` — not migrated

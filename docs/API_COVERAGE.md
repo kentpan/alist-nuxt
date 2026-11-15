@@ -18,7 +18,7 @@ Status values: `implemented` means a route exists in this migration; it does not
 | Admin users | list/get/create/update/delete/cancel_2fa | implemented | Needs full pagination/filter/edge-case contract tests |
 | Admin roles | list/get/create/update/delete | implemented | Path scopes are normalized and stored as JSON |
 | Admin | metadata, storage, driver catalog, settings CRUD, message, index lifecycle, labels, external downloader settings, FRP | pending | Subsequent stages |
-| Filesystem | `/api/fs/*`, upload/download/proxy, batch actions, search, archive | pending | Subsequent stages |
+| Filesystem | `/api/fs/list`, `/api/fs/get`, mkdir, rename, move, copy, remove, raw upload, download | partial | Implemented for the local Node driver; pagination, range/proxy, batch semantics, cross-driver operations, search and archive remain pending |
 | Share | `/api/share/*`, public share auth/list/get | pending | Subsequent stages |
 | Protocols | WebDAV, S3, FTP, SFTP | pending | Subsequent stages |
 
