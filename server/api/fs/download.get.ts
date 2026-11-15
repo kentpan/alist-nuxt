@@ -7,6 +7,19 @@ export default defineEventHandler(async (event) => {
   const ctx = await fsContext(event, String(body.path ?? ''))
   if (isFsError(ctx)) return ctx.response
   try {
+    if (ctx.resolved.remote) {
+      const remote = await ctx.resolved.remote.openRead(ctx.virtualPath, getHeader(event, 'range'))
+      const headers = new Headers({
+        'content-type': remote.headers.get('content-type') || 'application/octet-stream',
+        'content-disposition': 'attachment',
+        'accept-ranges': remote.headers.get('accept-ranges') || 'bytes'
+      })
+      for (const name of ['content-length', 'content-range', 'last-modified']) {
+        const value = remote.headers.get(name)
+        if (value) headers.set(name, value)
+      }
+      return new Response(remote.stream, { status: remote.status, headers })
+    }
     const target = await localReadPath(ctx.resolved)
     const { createReadStream, promises: fs } = await import('node:fs')
     const stat = await fs.stat(target)
