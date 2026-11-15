@@ -13,13 +13,13 @@ type ApiResult<T> = { code: number; message?: string; data: T }
 const token = useCookie<string>('alist_token', { sameSite: 'lax', maxAge: 60 * 60 * 24 * 7 })
 const username = ref('admin')
 const password = ref('')
-const currentPath = ref('/')
+const currentPath = ref('/local')
 const files = ref<FileItem[]>([])
 const selectedPath = ref('')
 const renameName = ref('')
-const destinationPath = ref('/')
+const destinationPath = ref('/local')
 const localRoot = ref('./data/storage')
-const mountPath = ref('/')
+const mountPath = ref('/local')
 const busy = ref(false)
 const error = ref('')
 const notice = ref('')
@@ -119,8 +119,8 @@ async function uploadFile(event: Event) {
   try {
     const target = `${currentPath.value === '/' ? '' : currentPath.value}/${file.name}`
     const response = await fetch('/api/fs/put', {
-      method: 'POST',
-      headers: { authorization: token.value, 'File-Path': encodeURIComponent(target), Overwrite: 'false', 'client-id': 'alist-nuxt-web' },
+      method: 'PUT',
+      headers: { authorization: token.value, 'File-Path': target, Overwrite: 'false', 'client-id': 'alist-nuxt-web' },
       body: file
     })
     const result = await response.json() as ApiResult<unknown>
@@ -189,10 +189,10 @@ async function addLocalStorage() {
   try {
     await api('/api/admin/storage/create', {
       method: 'POST',
-      body: { mount_path: mountPath.value, driver: 'local', addition: { root_folder_path: localRoot.value, show_hidden: false } }
+      body: { mount_path: mountPath.value, driver: 'Local', addition: { root_path: localRoot.value, show_hidden: false } }
     })
     notice.value = '本地存储已添加'
-    await loadFiles('/')
+    await loadFiles(mountPath.value)
   } catch (cause: any) { error.value = cause?.message || '添加存储失败' }
   finally { busy.value = false }
 }
