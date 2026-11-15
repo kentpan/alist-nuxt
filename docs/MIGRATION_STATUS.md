@@ -27,7 +27,7 @@ The auth routes are not yet fully equivalent: LDAP, SSO, WebAuthn/passkeys, SSH 
 ## Stage 3 — local storage and core filesystem APIs: implementation started
 - Added a local filesystem driver with mount-path routing, symlink/path-traversal protection, hidden-file filtering, metadata, list/get, mkdir, rename, move, copy, remove, streaming upload and download.
 - Added admin storage list/create endpoints for local mounts.
-- Unit tests cover path traversal, symlink escape prevention and local file operations; CI typecheck/build and isolated HTTP integration tests are required before marking this stage validated.
+- Unit tests cover path traversal, symlink escape prevention and local file operations. CI typecheck/build and isolated HTTP integration tests passed in run `43663586226`.
 - This first driver is Node-only. Cloudflare Edge needs an object-storage driver (for example R2) and D1-compatible storage metadata; that adapter is not yet implemented.
 
 ## Not yet migrated
