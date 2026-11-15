@@ -1,0 +1,93 @@
+name: Stage 2 - Auth migration validation retry
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bootstrap/stage2-fix-trigger.txt'
+permissions:
+  contents: write
+  actions: write
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore and patch Stage 2 source bundle
+        run: |
+          set -euo pipefail
+          cat bootstrap/stage2-part-{1..5}.b64 | base64 -d > /tmp/stage2-delta.tar.gz
+          echo "6646ae82f7c4b4b6011befdc2ab54e0b9aebbab078368c8c9bef18271d3bdf50  /tmp/stage2-delta.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/stage2-delta.tar.gz -C .
+          bash scripts/fix-stage2.sh
+          rm -f bootstrap/stage2-part-*.b64 bootstrap/stage2-fix-trigger.txt
+      - name: Install dependencies and generate lockfile
+        run: npm install --no-audit --no-fund
+      - name: Unit and migration tests
+        run: npm test
+      - name: Validate Prisma schema
+        env:
+          DATABASE_URL: file:../data/ci.db
+        run: npx prisma validate
+      - name: Type check
+        run: npx nuxt typecheck
+      - name: Build Node server
+        run: npm run build
+      - name: Apply isolated migrations and seed a CI-only administrator
+        env:
+          DATABASE_URL: file:../data/ci.db
+          DATABASE_PATH: ./data/ci.db
+          BOOTSTRAP_ADMIN_USERNAME: admin
+          BOOTSTRAP_ADMIN_PASSWORD: stage2-ci-only-password
+          ALLOW_REGISTER: 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          npm run db:migrate
+          npm run db:seed
+      - name: Start local server and exercise real auth APIs
+        env:
+          DATABASE_PATH: ./data/ci.db
+          JWT_SECRET: stage2-ci-only-jwt-secret
+          BOOTSTRAP_ADMIN_PASSWORD: stage2-ci-only-password
+          NITRO_HOST: 127.0.0.1
+          NITRO_PORT: 3000
+          ALLOW_REGISTER: 'true'
+        run: |
+          set -euo pipefail
+          node .output/server/index.mjs > /tmp/alist-stage2-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/smoke-auth.mjs
+      - name: Commit Stage 2 source and lockfile
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat(stage-2): migrate Alist auth, roles and sessions'
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
+      - name: Package Stage 2
+        run: |
+          set -euo pipefail
+          mkdir -p download
+          zip -qr download/alist-nuxt-stage2.zip . -x '.git/*' 'node_modules/*' '.nuxt/*' '.output/*' 'download/*'
+          unzip -t download/alist-nuxt-stage2.zip
+          sha256sum download/alist-nuxt-stage2.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alist-nuxt-stage2-package
+          path: download/alist-nuxt-stage2.zip
+          if-no-files-found: error
+          retention-days: 30
