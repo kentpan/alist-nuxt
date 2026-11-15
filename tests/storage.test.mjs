@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { Readable } from 'node:stream'
 import { createLocalStorageAdapter, normalizeVirtualPath } from '../server/utils/storage.ts'
 
 test('virtual paths are normalized and traversal is rejected', () => {
@@ -17,6 +18,8 @@ test('local storage supports list, mkdir, upload, rename, copy, move and remove'
     const storage = await createLocalStorageAdapter({ mountPath: '/', rootPath: root })
     await storage.makeDir('/docs')
     await storage.put('/docs/a.txt', new TextEncoder().encode('hello'))
+    await storage.putStream('/docs/stream.txt', Readable.from([Buffer.from('streamed')]))
+    assert.equal(await readFile(join(root, 'docs', 'stream.txt'), 'utf8'), 'streamed')
     assert.equal((await storage.get('/docs/a.txt')).size, 5)
     assert.equal((await storage.list('/docs')).length, 1)
     await storage.rename('/docs/a.txt', 'b.txt')

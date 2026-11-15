@@ -13,6 +13,7 @@ export interface LocalStorageAdapter {
   get(virtualPath: string): Promise<StorageFile>
   makeDir(virtualPath: string): Promise<void>
   put(virtualPath: string, data: Uint8Array, overwrite?: boolean): Promise<StorageFile>
+  putStream(virtualPath: string, readable: any, overwrite?: boolean): Promise<StorageFile>
   rename(virtualPath: string, newName: string): Promise<void>
   move(virtualPath: string, destinationDir: string): Promise<void>
   copy(virtualPath: string, destinationDir: string, overwrite?: boolean): Promise<void>
@@ -126,6 +127,24 @@ export async function createLocalStorageAdapter(options: {
       const target = await resolve(virtualPath)
       await fs.writeFile(target, data, { flag: overwrite ? 'w' : 'wx' })
       return info(virtualPath, target)
+    },
+    async putStream(virtualPath, readable, overwrite = false) {
+      const target = await resolve(virtualPath)
+      const temporary = `${target}.upload-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const { pipeline } = await import('node:stream/promises')
+      try {
+        await pipeline(readable, nodeFs.createWriteStream(temporary, { flags: 'wx' }))
+        if (overwrite) {
+          await fs.rename(temporary, target)
+        } else {
+          await fs.link(temporary, target)
+          await fs.unlink(temporary)
+        }
+        return info(virtualPath, target)
+      } catch (error) {
+        await fs.rm(temporary, { force: true }).catch(() => {})
+        throw error
+      }
     },
     async rename(virtualPath, newName) {
       if (!newName || newName === '.' || newName === '..' || /[\\/\\0]/.test(newName)) throw new Error('Invalid file name')
