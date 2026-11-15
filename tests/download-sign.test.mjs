@@ -38,3 +38,11 @@ test('signature is not reusable for another virtual path', async () => {
   const signature = await createDownloadSignature('/remote/one.txt', secret, expires)
   assert.equal(await verifyDownloadSignature('/remote/two.txt', secret, expires, signature, expires - 1), false)
 })
+
+test('signed media URLs enforce the 24 hour maximum lifetime', async () => {
+  const secret = 'ci-stage5-signing-secret-with-sufficient-entropy'
+  const expires = 2_000_000_000
+  const signature = await createDownloadSignature('/local/long-lived.bin', secret, expires)
+  assert.equal(await verifyDownloadSignature('/local/long-lived.bin', secret, expires, signature, expires - 86400), true)
+  assert.equal(await verifyDownloadSignature('/local/long-lived.bin', secret, expires, signature, expires - 86401), false)
+})
