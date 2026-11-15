@@ -1,4 +1,4 @@
-name: Stage 4 - Browser interaction test (current filesystem contract)
+name: Stage 4 - Browser interaction test (full Local filesystem contract)
 on:
   push:
     branches: [main]
@@ -8,6 +8,8 @@ on:
       - 'prisma/**'
       - 'scripts/seed-storage.mjs'
       - 'scripts/smoke-browser.mjs'
+      - 'scripts/smoke-fs.mjs'
+      - 'tests/**'
       - '.github/workflows/stage4-browser.yml'
 permissions:
   contents: read
