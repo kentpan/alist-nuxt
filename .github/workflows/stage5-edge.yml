@@ -61,3 +61,60 @@ jobs:
         run: npm run build
       - name: Verify generated Edge worker entrypoint
         run: test -s .output/server/index.mjs
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install project and Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Test and build Node server
+        env:
+          DATABASE_URL: file:../data/ci.db
+        run: |
+          npm test
+          npx prisma validate
+          npx nuxt typecheck
+          npm run build
+      - name: Prepare isolated database
+        env:
+          DATABASE_URL: file:../data/ci.db
+          DATABASE_PATH: ./data/ci.db
+          BOOTSTRAP_ADMIN_USERNAME: admin
+          BOOTSTRAP_ADMIN_PASSWORD: stage5-ci-only-password
+          ALLOW_REGISTER: 'true'
+        run: |
+          mkdir -p data
+          npm run db:migrate
+          npm run db:seed
+      - name: Exercise APIs and browser preview
+        env:
+          DATABASE_PATH: ./data/ci.db
+          NUXT_DATABASE_PATH: ./data/ci.db
+          JWT_SECRET: stage5-ci-only-jwt-secret
+          NUXT_JWT_SECRET: stage5-ci-only-jwt-secret
+          BOOTSTRAP_ADMIN_PASSWORD: stage5-ci-only-password
+          ALLOW_REGISTER: 'true'
+          LOCAL_STORAGE_ROOT: ./data/storage
+          NITRO_HOST: 127.0.0.1
+          NITRO_PORT: 3000
+        run: |
+          set -euo pipefail
+          node .output/server/index.mjs > /tmp/alist-stage5-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/alist-stage5-server.log' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/smoke-auth.mjs
+          node scripts/smoke-fs.mjs
+          node scripts/seed-storage.mjs
+          node scripts/smoke-browser.mjs
