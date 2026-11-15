@@ -24,9 +24,23 @@ export default defineEventHandler(async (event) => {
     db = auth.db
   }
 
-  if (!(event as any).node?.req) return send(event, 'Local file streaming is supported only by the Node runtime', 501)
   try {
     const resolved = await resolveStorage(db, virtualPath)
+    if (resolved.remote) {
+      const remote = await resolved.remote.openRead(virtualPath, getHeader(event, 'range'))
+      const headers = new Headers({
+        'content-type': remote.headers.get('content-type') || contentType(virtualPath),
+        'content-disposition': 'inline',
+        'accept-ranges': remote.headers.get('accept-ranges') || 'bytes',
+        'cache-control': signed ? 'private, max-age=60' : 'private, max-age=0, must-revalidate'
+      })
+      for (const name of ['content-length', 'content-range', 'last-modified']) {
+        const value = remote.headers.get(name)
+        if (value) headers.set(name, value)
+      }
+      return new Response(remote.stream, { status: remote.status, headers })
+    }
+    if (!(event as any).node?.req) return send(event, 'Local file streaming is supported only by the Node runtime', 501)
     const target = await localReadPath(resolved)
     const { createReadStream, promises: fs } = await import('node:fs')
     const stat = await fs.stat(target)
