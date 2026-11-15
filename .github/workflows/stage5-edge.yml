@@ -39,6 +39,12 @@ on:
       - 'app/pages/index.vue'
       - 'scripts/smoke-fs.mjs'
       - 'scripts/smoke-browser.mjs'
+      - 'scripts/rotate-webdav-credentials.mjs'
+      - 'tests/credential-*.test.mjs'
+      - 'server/utils/credential-crypto.ts'
+      - 'server/api/admin/storage/**'
+      - 'package.json'
+      - '.env.example'
 permissions:
   contents: read
 jobs:
