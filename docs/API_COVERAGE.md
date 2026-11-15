@@ -25,7 +25,7 @@ Status values: `implemented` means a route exists and has the stated test covera
 ## Security and compatibility notes
 - Local storage requires an absolute configured root path and refuses traversal and symlink escapes.
 - Local filesystem operations require the Node runtime; WebDav uses fetch and can run on Node/Edge with D1 metadata.
-- WebDav remains experimental: credentials are currently stored in the Storage addition JSON without at-rest encryption; do not use production credentials. A real-provider interoperability suite and admin UI configuration form remain pending.
+- WebDav remains experimental: new storage create/update operations AES-GCM encrypt username/password using `NUXT_STORAGE_CREDENTIALS_KEY`; legacy plaintext rows remain readable for migration and must be re-saved/rotated before production. A real-provider interoperability suite and admin UI configuration form remain pending.
 - The backend's built-in admin role ID `2` and guest role ID `1` are preserved.
 - Password hashing follows upstream `StaticHash` + salted SHA-256 `TwoHashPwd` format.
 - The `Authorization` header accepts a raw token and also accepts `Bearer <token>`.
