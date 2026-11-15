@@ -256,7 +256,7 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <section v-if="!isLoggedIn" class="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <p class="text-sm font-semibold text-indigo-600">Alist Nuxt · Stage 4</p>
+      <p class="text-sm font-semibold text-indigo-600">Alist Nuxt · Stage 6</p>
       <h1 class="mt-2 text-2xl font-semibold text-slate-900">登录管理面板</h1>
       <p class="mt-2 text-sm text-slate-500">使用本地迁移环境中的管理员账号登录。</p>
       <form class="mt-6 space-y-4" @submit.prevent="login">
