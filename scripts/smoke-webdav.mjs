@@ -158,7 +158,45 @@ try {
   await api('/api/fs/remove', 'POST', { dir: '/webdav', names: ['renamed.txt'] })
   const search = await api('/api/fs/search?parent=%2Fwebdav&key=hello', 'GET')
   assert.ok(search.content.some(item => item.name === 'hello.txt'))
-  process.stdout.write('Stage 6 WebDAV API integration passed: storage CRUD, list, mkdir, upload, signed range preview, download range, rename, copy, move, remove and recursive search.\n')
+  process.stdout.write('Stage 6 loopback WebDAV protocol fixture passed.\\n')
+
+  const externalUrl = process.env.WEBDAV_EXTERNAL_URL
+  if (externalUrl) {
+    const externalMount = '/apache-dav'
+    const externalUser = process.env.WEBDAV_USERNAME || ''
+    const externalPassword = process.env.WEBDAV_PASSWORD || ''
+    assert.ok(externalUser && externalPassword, 'WEBDAV_USERNAME and WEBDAV_PASSWORD are required with WEBDAV_EXTERNAL_URL')
+    const external = await api('/api/admin/storage/create', 'POST', {
+      mount_path: externalMount,
+      driver: 'WebDav',
+      addition: { url: externalUrl, username: externalUser, password: externalPassword }
+    })
+    assert.ok(external.id)
+    await api('/api/fs/mkdir', 'POST', { path: `${externalMount}/ci-folder` })
+    const externalUpload = await fetch(new URL('/api/fs/put', base), {
+      method: 'PUT',
+      headers: { authorization: token, 'client-id': 'alist-webdav-smoke', 'File-Path': encodeURIComponent(`${externalMount}/copy-me.txt`), Overwrite: 'false' },
+      body: 'external provider integration'
+    })
+    const externalUploadBody = await externalUpload.json()
+    assert.equal(externalUpload.ok, true, JSON.stringify(externalUploadBody))
+    assert.equal(externalUploadBody.code, 200, JSON.stringify(externalUploadBody))
+
+    const externalInfo = await api('/api/fs/get', 'POST', { path: `${externalMount}/copy-me.txt` })
+    const externalRange = await fetch(new URL(externalInfo.raw_url, base), { headers: { Range: 'bytes=1-4' } })
+    assert.equal(externalRange.status, 206)
+    assert.equal(await externalRange.text(), 'xter')
+
+    await api('/api/fs/rename', 'POST', { path: `${externalMount}/copy-me.txt`, name: 'renamed.txt' })
+    await api('/api/fs/copy', 'POST', { src_dir: externalMount, dst_dir: `${externalMount}/ci-folder`, names: ['renamed.txt'] })
+    await api('/api/fs/move', 'POST', { src_dir: `${externalMount}/ci-folder`, dst_dir: externalMount, names: ['renamed.txt'] })
+    const externalList = await api('/api/fs/list', 'POST', { path: externalMount })
+    assert.ok(externalList.content.some(item => item.name === 'renamed.txt'))
+    const externalSearch = await api(`/api/fs/search?parent=${encodeURIComponent(externalMount)}&key=renamed`, 'GET')
+    assert.ok(externalSearch.content.some(item => item.name === 'renamed.txt'))
+    await api('/api/fs/remove', 'POST', { dir: externalMount, names: ['renamed.txt', 'ci-folder'] })
+    process.stdout.write('Stage 6 Apache WebDAV provider interoperability passed: Basic auth, PROPFIND, MKCOL, PUT, signed range GET, MOVE, COPY, rename, recursive search and DELETE.\\n')
+  }
 } finally {
   await new Promise((resolve, reject) => dav.close(error => error ? reject(error) : resolve()))
 }
