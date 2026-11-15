@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { resolveStorage, localList, localMkdir, localRemove, localRename, localMove, localCopy, validateWebDavAddition } from '../server/utils/storage.ts'
+import { protectWebDavAddition } from '../server/utils/credential-crypto.ts'
 
 const row = {
   id: 77, mountPath: '/remote', driver: 'WebDav', addition: JSON.stringify({ url: 'https://dav.example/dav/root/', username: 'test', password: 'secret' }),
@@ -48,4 +49,24 @@ test('WebDAV mount roots cannot be renamed, moved, copied or removed', async () 
   await assert.rejects(localRemove(root), /storage root/)
   await assert.rejects(localMove(db, '/remote', '/remote', 'remote'), /storage root/)
   await assert.rejects(localCopy(db, '/remote', '/remote', 'remote'), /storage root/)
+})
+
+test('storage resolver decrypts encrypted WebDAV credentials only with the configured key', async () => {
+  const secret = 'webdav-resolver-test-key-with-at-least-32-characters'
+  const addition = await protectWebDavAddition({ url: 'https://dav.example/dav/root/', username: 'test-user', password: 'test-password' }, secret)
+  const encryptedRow = { ...row, addition: JSON.stringify(addition) }
+  const originalFetch = globalThis.fetch
+  let authorization = ''
+  globalThis.fetch = async (_url, init) => {
+    authorization = String(init.headers.Authorization ?? '')
+    return new Response(listing, { status: 207 })
+  }
+  try {
+    const resolved = await resolveStorage({ all: async () => [encryptedRow] } as any, '/remote', secret)
+    await resolved.remote!.get('/remote')
+    assert.equal(authorization, `Basic ${btoa('test-user:test-password')}`)
+    await assert.rejects(resolveStorage({ all: async () => [encryptedRow] } as any, '/remote'), /could not be decrypted/)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })
