@@ -1,0 +1,63 @@
+name: Stage 4 - Browser interaction test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'scripts/smoke-browser.mjs'
+      - '.github/workflows/stage4-browser.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install project and browser dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Build and validate
+        env:
+          DATABASE_URL: file:../data/ci.db
+        run: |
+          set -euo pipefail
+          npm test
+          npx prisma validate
+          npx nuxt typecheck
+          npm run build
+      - name: Prepare isolated browser-test database and storage
+        env:
+          DATABASE_URL: file:../data/ci.db
+          DATABASE_PATH: ./data/ci.db
+          LOCAL_STORAGE_ROOT: ./data/storage
+          BOOTSTRAP_ADMIN_USERNAME: admin
+          BOOTSTRAP_ADMIN_PASSWORD: stage4-ci-only-password
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          npm run db:migrate
+          npm run db:seed
+          node scripts/seed-storage.mjs
+      - name: Run real Chromium interactions
+        env:
+          NUXT_DATABASE_PATH: ./data/ci.db
+          NUXT_JWT_SECRET: stage4-ci-only-jwt-secret
+          BOOTSTRAP_ADMIN_PASSWORD: stage4-ci-only-password
+          NITRO_HOST: 127.0.0.1
+          NITRO_PORT: 3000
+        run: |
+          set -euo pipefail
+          node .output/server/index.mjs > /tmp/alist-stage4-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/smoke-browser.mjs
