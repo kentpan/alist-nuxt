@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     databasePath: process.env.DATABASE_PATH || './data/alist-nuxt.db',
     jwtSecret: process.env.JWT_SECRET || 'local-development-only-change-this-secret',
     adminToken: process.env.ADMIN_TOKEN || '',
+    storageCredentialsKey: process.env.NUXT_STORAGE_CREDENTIALS_KEY || process.env.STORAGE_CREDENTIALS_KEY || '',
     tokenExpiresIn: Number(process.env.TOKEN_EXPIRES_IN || 48),
     public: { appName: 'Alist Nuxt' }
   },
