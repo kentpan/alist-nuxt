@@ -54,6 +54,9 @@ jobs:
         env:
           DATABASE_PATH: ./data/ci.db
           JWT_SECRET: stage2-ci-only-jwt-secret
+          NUXT_DATABASE_PATH: ./data/ci.db
+          NUXT_JWT_SECRET: stage2-ci-only-jwt-secret
+          NUXT_TOKEN_EXPIRES_IN: '48'
           BOOTSTRAP_ADMIN_PASSWORD: stage2-ci-only-password
           NITRO_HOST: 127.0.0.1
           NITRO_PORT: 3000
@@ -62,7 +65,7 @@ jobs:
           set -euo pipefail
           node .output/server/index.mjs > /tmp/alist-stage2-server.log 2>&1 &
           server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/alist-stage2-server.log' EXIT
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
             sleep 1
