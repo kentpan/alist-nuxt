@@ -1,0 +1,36 @@
+name: Stage 0 - Fetch pinned upstream source archives
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  actions: write
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download exact upstream source archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p upload
+          curl -fL --retry 3 "https://github.com/AlistGo/alist/archive/92e745360766cce32564f94a468cb576f577d27e.zip" -o upload/alist-backend-92e745360766cce32564f94a468cb576f577d27e.zip
+          curl -fL --retry 3 "https://github.com/AlistGo/alist-web/archive/907756a8d5dff27d6b73036734de0a6533ace553.zip" -o upload/alist-frontend-907756a8d5dff27d6b73036734de0a6533ace553.zip
+          sha256sum upload/*.zip | tee upload/SHA256SUMS
+          unzip -t upload/alist-backend-92e745360766cce32564f94a468cb576f577d27e.zip
+          unzip -t upload/alist-frontend-907756a8d5dff27d6b73036734de0a6533ace553.zip
+          cat > upload/SOURCE-METADATA.txt <<'EOF'
+          Backend: https://github.com/AlistGo/alist
+          Backend commit: 92e745360766cce32564f94a468cb576f577d27e
+          Frontend: https://github.com/AlistGo/alist-web
+          Frontend commit: 907756a8d5dff27d6b73036734de0a6533ace553
+          Archives are unmodified GitHub source ZIPs. SHA-256 values are in SHA256SUMS.
+          EOF
+      - name: Upload source archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: alist-official-source-archives
+          path: upload/
+          if-no-files-found: error
+          retention-days: 30
