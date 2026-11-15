@@ -1,1 +1,1 @@
-Retry Stage 2 with /api/me moved to server/routes.
+Retry Stage 2 with corrected /api/me helper import.
