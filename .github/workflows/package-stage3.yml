@@ -1,0 +1,42 @@
+name: Stage 3 - Clean distribution package
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/utils/storage.ts'
+      - 'server/api/fs/**'
+      - 'server/api/admin/storage/**'
+      - 'scripts/seed-storage.mjs'
+      - 'scripts/smoke-storage.mjs'
+      - 'docs/API_COVERAGE.md'
+      - 'docs/MIGRATION_STATUS.md'
+      - 'docs/DRIVER_MIGRATION_MATRIX.md'
+      - '.github/workflows/package-stage3.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build a clean, secret-free Stage 3 distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data download
+          mkdir -p download
+          zip -qr download/alist-nuxt-stage3.zip . -x '.git/*' 'node_modules/*' '.nuxt/*' '.output/*' 'download/*'
+          unzip -t download/alist-nuxt-stage3.zip
+          if unzip -Z1 download/alist-nuxt-stage3.zip | grep -E '(^|/)(\.env$|[^/]+\.db(-[^/]*)?$|[^/]+\.sqlite3?$)'; then
+            echo 'Refusing to publish a package containing environment files or database files.'
+            exit 1
+          fi
+          test -s download/alist-nuxt-stage3.zip
+          sha256sum download/alist-nuxt-stage3.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alist-nuxt-stage3-clean-package
+          path: download/alist-nuxt-stage3.zip
+          if-no-files-found: error
+          retention-days: 30
