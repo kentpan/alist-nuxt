@@ -250,7 +250,7 @@ export interface ResolvedStorage {
   remote?: ReturnType<typeof createWebDavAdapter>
 }
 
-const SUPPORTED_DRIVERS = new Set(['Local', 'local', 'WebDav', 'webdav'])
+const SUPPORTED_DRIVERS = new Set(['local', 'webdav'])
 let nodeModulesPromise: Promise<{ fs: typeof import('node:fs/promises'); path: typeof import('node:path') }> | undefined
 
 async function nodeModules() {
@@ -259,7 +259,7 @@ async function nodeModules() {
 }
 
 export function supportedDriverNames(): string[] {
-  return [...SUPPORTED_DRIVERS]
+  return ['Local', 'WebDav']
 }
 
 export function normalizeMountPath(value: string): string {
@@ -308,7 +308,7 @@ export async function resolveStorage(db: DatabaseAdapter, virtualPath: string): 
   const rows = await db.all<StorageRow>('SELECT * FROM Storage WHERE disabled = 0 ORDER BY LENGTH(mountPath) DESC, "order" ASC, id ASC')
   const storage = rows.find(row => isSubPath(normalizeMountPath(row.mountPath), normalized))
   if (!storage) throw new StorageError(`No enabled storage is mounted at ${normalized}`, 404)
-  if (!SUPPORTED_DRIVERS.has(storage.driver) && !SUPPORTED_DRIVERS.has(storage.driver.toLowerCase())) throw new StorageError(`Driver ${storage.driver} is catalogued but not implemented in this runtime`, 501)
+  if (!SUPPORTED_DRIVERS.has(storage.driver.toLowerCase())) throw new StorageError(`Driver ${storage.driver} is catalogued but not implemented in this runtime`, 501)
   let addition: Record<string, unknown>
   try { addition = JSON.parse(storage.addition || '{}') } catch { throw new StorageError(`Storage ${storage.mountPath} has invalid addition JSON`, 500) }
   const mountPath = normalizeMountPath(storage.mountPath)
