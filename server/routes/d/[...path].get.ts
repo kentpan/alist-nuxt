@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       setHeader(event, 'content-range', `bytes ${start}-${end}/${stat.size}`)
     }
     setHeader(event, 'accept-ranges', 'bytes')
-    setHeader(event, 'content-length', String(Math.max(0, end - start + 1)))
+    setHeader(event, 'content-length', Math.max(0, end - start + 1))
     setHeader(event, 'content-type', contentType(virtualPath))
     setHeader(event, 'last-modified', stat.mtime.toUTCString())
     setHeader(event, 'cache-control', 'private, max-age=0, must-revalidate')
