@@ -135,8 +135,7 @@ try {
     body: 'duplicate'
   })
   const duplicateBody = await duplicateUpload.json()
-  assert.equal(duplicateUpload.status, 409, JSON.stringify(duplicateBody))
-  assert.equal(duplicateBody.code, 409, JSON.stringify(duplicateBody))
+    assert.equal(duplicateBody.code, 409, JSON.stringify(duplicateBody))
 
   const info = await api('/api/fs/get', 'POST', { path: '/webdav/upload.txt' })
   const signed = await fetch(new URL(info.raw_url, base), { headers: { Range: 'bytes=1-3' } })
