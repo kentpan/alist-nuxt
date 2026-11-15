@@ -1,1 +1,2 @@
 Retry Stage 2 with normalized session-list API route.
+Retry Stage 2: correct the explicit /api/me route import path.
