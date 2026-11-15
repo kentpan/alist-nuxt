@@ -1,5 +1,6 @@
 import { fail, ok, requireAdmin } from '../../../utils/auth'
 import { normalizeMountPath, validateLocalAddition, validateWebDavAddition } from '../../../utils/storage'
+import { protectWebDavAddition } from '../../../utils/credential-crypto'
 
 export default defineEventHandler(async (event) => {
   const context = await requireAdmin(event)
@@ -27,9 +28,14 @@ export default defineEventHandler(async (event) => {
       await validateLocalAddition(addition)
     } else validateWebDavAddition(addition)
   } catch (error: any) { return fail(error.message, error.statusCode ?? 400) }
+  let storedAddition = addition
+  if (requestedDriver === 'webdav') {
+    try { storedAddition = await protectWebDavAddition(addition, useRuntimeConfig(event).storageCredentialsKey) }
+    catch (error: any) { return fail(error.message || 'Unable to protect WebDAV credentials', 400) }
+  }
   const now = new Date().toISOString()
   await context.db.run('UPDATE Storage SET mountPath = ?, driver = ?, addition = ?, "order" = ?, disabled = ?, cacheExpiration = ?, status = ?, remark = ?, modified = ?, disableIndex = ?, enableSign = ?, orderBy = ?, orderDirection = ?, extractFolder = ?, webProxy = ?, webdavPolicy = ?, proxyRange = ?, downProxyUrl = ?, downProxySign = ?, updatedAt = ? WHERE id = ?', [
-    mountPath, driver, JSON.stringify(addition), Number(body.order ?? old.order), body.disabled === undefined ? old.disabled : (body.disabled ? 1 : 0),
+    mountPath, driver, JSON.stringify(storedAddition), Number(body.order ?? old.order), body.disabled === undefined ? old.disabled : (body.disabled ? 1 : 0),
     Number(body.cache_expiration ?? old.cacheExpiration), 'work', String(body.remark ?? old.remark), now,
     body.disable_index === undefined ? old.disableIndex : (body.disable_index ? 1 : 0), body.enable_sign === undefined ? old.enableSign : (body.enable_sign ? 1 : 0),
     String(body.order_by ?? old.orderBy), String(body.order_direction ?? old.orderDirection), String(body.extract_folder ?? old.extractFolder),
