@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const resolved = await resolveStorage(db, virtualPath)
+    const resolved = await resolveStorage(db, virtualPath, useRuntimeConfig(event).storageCredentialsKey)
     if (resolved.remote) {
       const remote = await resolved.remote.openRead(virtualPath, getHeader(event, 'range'))
       const headers = new Headers({
