@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const result = await storage.openRead(path)
     setHeader(event, 'content-type', 'application/octet-stream')
     setHeader(event, 'content-disposition', `attachment; filename*=UTF-8''${encodeURIComponent(result.file.name)}`)
-    setHeader(event, 'content-length', String(result.file.size))
+    setHeader(event, 'content-length', result.file.size)
     return sendStream(event, result.stream)
   } catch (error: any) {
     return fail(error?.message || 'Unable to download file', 400)
