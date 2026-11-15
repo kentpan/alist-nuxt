@@ -560,8 +560,9 @@
   {
     "name": "WebDav",
     "source_dir": "webdav",
-    "implemented": false,
-    "runtime": "pending"
+    "implemented": true,
+    "runtime": "node-edge",
+    "status": "experimental"
   },
   {
     "name": "WeiYun",
