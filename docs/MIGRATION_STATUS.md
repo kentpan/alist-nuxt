@@ -34,11 +34,12 @@
 - Real Chromium CI passes login, folder creation, upload, rename and delete against the isolated Node server.
 - Remaining UI parity: full upstream admin console, storage/driver configuration forms for every provider, internationalization catalogue, shares and advanced file operations.
 
-## Stage 5 — signed media preview and Edge compatibility: in progress
+## Stage 5 — signed media preview and Edge compatibility: validated
 - HMAC-SHA-256 signed media URLs using WebCrypto, with path binding and expiry.
 - Range-aware stream endpoint supports browser media seeking without exposing a bearer token in an HTML media element.
 - Browser preview for images, video, audio, PDF and text files.
-- CI now checks mocked D1 behavior, signature tampering/expiry, Node APIs, Chromium preview, and a Cloudflare Pages Edge build. No deployment is performed.
+- CI passed on commit `ffa3ba01927e491f4a13293c8c7611cadcff69e7`: unit tests, Prisma validation, Nuxt typecheck, Node build, Cloudflare Pages Edge build and generated Worker entrypoint check.
+- Isolated Chromium CI passed login, folder creation, upload, signed text preview, rename and delete; API smoke tests passed authentication and Local filesystem operations. No deployment is performed.
 - Cloudflare Edge can use D1 for metadata; Local filesystem storage remains intentionally Node-only. A supported remote Edge storage driver is still required for actual file access on Edge.
 
 ## Stage 6 — remaining upstream parity and release
