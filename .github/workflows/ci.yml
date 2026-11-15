@@ -2,6 +2,9 @@ name: Stage 1 - Runtime foundation CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'bootstrap/**'
+      - '.github/workflows/stage2-apply.yml'
   pull_request:
     branches: [main]
 permissions:
