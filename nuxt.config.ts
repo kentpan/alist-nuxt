@@ -10,6 +10,9 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     databasePath: process.env.DATABASE_PATH || './data/alist-nuxt.db',
+    jwtSecret: process.env.JWT_SECRET || 'local-development-only-change-this-secret',
+    adminToken: process.env.ADMIN_TOKEN || '',
+    tokenExpiresIn: Number(process.env.TOKEN_EXPIRES_IN || 48),
     public: { appName: 'Alist Nuxt' }
   },
   typescript: { strict: true, typeCheck: true }

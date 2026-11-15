@@ -9,12 +9,27 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+  help      String   @default("")
+  type      String   @default("string")
+  options   String   @default("")
+  group     Int      @default(0)
+  flag      Int      @default(1)
+  index     Int      @default(0)
 }
 model User {
   id           Int      @id @default(autoincrement())
   username     String   @unique
   passwordHash String
-  role         String   @default("user")
+  legacyRole   String   @default("user") @map("role")
+  pwdTs        Int      @default(0)
+  salt         String   @default("")
+  basePath     String   @default("/")
+  roles        String   @default("[]")
+  permission   Int      @default(0)
+  otpSecret    String   @default("")
+  ssoId        String   @default("")
+  authn        String   @default("[]")
+  sessions     Session[]
   disabled     Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -28,4 +43,34 @@ model Storage {
   disabled  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id                Int     @id @default(autoincrement())
+  name              String  @unique
+  description       String  @default("")
+  isDefault         Boolean @default(false) @map("default")
+  permissionScopes String  @default("[]")
+}
+
+model Session {
+  userId     Int
+  deviceKey  String   @id
+  userAgent  String   @default("")
+  ip         String   @default("")
+  lastActive Int
+  status     Int      @default(0)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, status])
+}
+
+model RevokedToken {
+  tokenHash String @id
+  expiresAt Int
+}
+
+model LoginAttempt {
+  ip        String @id
+  count     Int    @default(0)
+  expiresAt Int
 }

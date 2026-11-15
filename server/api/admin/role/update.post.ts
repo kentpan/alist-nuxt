@@ -1,0 +1,15 @@
+import { fail, ok, requireAdmin, cleanPath } from '../../../utils/auth'
+export default defineEventHandler(async (event) => {
+  const context = await requireAdmin(event)
+  if ('error' in context) return fail(context.error, context.code)
+  const body = await readBody<any>(event)
+  const id = Number(body?.id)
+  const old = await context.db.first<any>('SELECT * FROM Role WHERE id = ?', [id])
+  if (!old) return fail('role not found', 404)
+  if (['admin', 'guest'].includes(old.name)) return fail('built-in roles cannot be modified', 403)
+  const name = String(body.name ?? old.name).trim()
+  if (await context.db.first('SELECT id FROM Role WHERE name = ? AND id <> ?', [name, id])) return fail('role already exists', 409)
+  const scopes = Array.isArray(body.permission_scopes) ? body.permission_scopes.map((x: any) => ({ path: cleanPath(String(x.path ?? '/')), permission: Number(x.permission) || 0 })) : JSON.parse(old.permissionScopes || '[]')
+  await context.db.run('UPDATE Role SET name = ?, description = ?, "default" = ?, permissionScopes = ? WHERE id = ?', [name, String(body.description ?? old.description), body.default === undefined ? old.default : (body.default ? 1 : 0), JSON.stringify(scopes), id])
+  return ok()
+})

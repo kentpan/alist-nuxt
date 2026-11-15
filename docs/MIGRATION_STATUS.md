@@ -13,5 +13,16 @@
 - Health endpoint confirms runtime selection without touching external services.
 - Local Node SQLite migration and Node/D1 adapter contract tests pass.
 
+## Stage 2 — authentication and permissions: implementation started
+
+- Alist-compatible SHA-256 static password hashing and salted password hashes.
+- HS256 JWTs with `username`, `pwd_ts`, issue/not-before/expiry claims; password timestamp invalidation and token revocation.
+- Login attempt throttling, TOTP verification and QR generation, client/device keys, device session TTL and max-device policy.
+- Guest/admin role seeding, role permission-scope bitmasks, registration gate, current-user/profile/logout/public-settings APIs.
+- Initial admin user and role list/get/create/update/delete APIs.
+- Prisma migrations add Role, Session, RevokedToken, LoginAttempt and Setting metadata.
+
+The auth routes are not yet fully equivalent: LDAP, SSO, WebAuthn/passkeys, SSH keys, full session-management endpoints and every admin user/role edge case remain open. Run the CI suite before marking Stage 2 complete.
+
 ## Not yet migrated
 Authentication, permissions, storage drivers, file APIs, WebDAV, search, task execution, previews/media, administration UI, internationalization, and deployment remain unimplemented and must be tracked in later stages.
