@@ -16,7 +16,11 @@ try {
 
   page.once('dialog', dialog => dialog.accept('browser-test-folder'))
   await page.getByRole('button', { name: '新建文件夹' }).click()
-  await page.getByText('browser-test-folder', { exact: true }).waitFor()
+  try {
+    await page.getByText('browser-test-folder', { exact: true }).waitFor({ timeout: 5000 })
+  } catch {
+    throw new Error(`Folder creation did not appear in the file list. UI text: ${await page.locator('body').innerText()}`)
+  }
 
   await page.locator('input[type="file"]').setInputFiles({
     name: 'browser-test.txt',
