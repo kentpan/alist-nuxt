@@ -1,1 +1,1 @@
-Retry Stage 2: add explicit /api/me current-user route for the smoke test and API compatibility.
+Retry Stage 2 with /api/me moved to server/routes.
