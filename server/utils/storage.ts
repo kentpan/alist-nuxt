@@ -278,6 +278,16 @@ export function joinUserPath(basePath: string, requestPath: string): string {
   return combined
 }
 
+export function validateWebDavAddition(addition: Record<string, unknown>): void {
+  const value = String(addition.url ?? addition.address ?? '')
+  if (!value) throw new StorageError('WebDAV requires addition.url', 400)
+  let url: URL
+  try { url = new URL(value) } catch { throw new StorageError('WebDAV URL is invalid', 400) }
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.hash) throw new StorageError('WebDAV URL must be an HTTP(S) endpoint without embedded credentials or a fragment', 400)
+  const localHosts = new Set(['localhost', '127.0.0.1', '[::1]'])
+  if (url.protocol !== 'https:' && !localHosts.has(url.hostname)) throw new StorageError('WebDAV credentials and data require HTTPS except for loopback test endpoints', 400)
+}
+
 export async function validateLocalAddition(addition: Record<string, unknown>): Promise<void> {
   const rootValue = String(addition.root_path ?? addition.rootPath ?? addition.root_folder_path ?? addition.rootFolderPath ?? '')
   if (!rootValue) throw new StorageError('Local storage requires addition.root_path', 400)
