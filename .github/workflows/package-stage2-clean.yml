@@ -12,6 +12,7 @@ on:
       - 'prisma/**'
       - 'server/**'
       - 'scripts/**'
+      - '.github/workflows/**'
       - 'upload/**'
 permissions:
   contents: read
