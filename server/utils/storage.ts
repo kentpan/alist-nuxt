@@ -201,10 +201,10 @@ export async function resolveStorageForPath(db: {
     return isWithinMount(normalized, mount)
   })
   if (!storage) throw new Error('No enabled storage is mounted at this path')
-  if (storage.driver !== 'local') throw new Error(`Storage driver "${storage.driver}" is not implemented in this stage`)
+  if (storage.driver.toLowerCase() !== 'local') throw new Error(`Storage driver "${storage.driver}" is not implemented in this stage`)
   let addition: Record<string, unknown>
   try { addition = JSON.parse(storage.addition || '{}') } catch { throw new Error('Storage addition must be valid JSON') }
-  const rootPath = String(addition.root_folder_path ?? addition.rootFolderPath ?? '')
+  const rootPath = String(addition.root_path ?? addition.rootPath ?? addition.root_folder_path ?? addition.rootFolderPath ?? '')
   return createLocalStorageAdapter({
     mountPath: storage.mountPath,
     rootPath,
