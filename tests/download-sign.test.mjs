@@ -31,3 +31,10 @@ test('signature verifier rejects malformed encodings, weak secrets and expired b
 test('signature verifier rejects missing signatures without throwing', async () => {
   assert.equal(await verifyDownloadSignature('/local/file', 'ci-stage5-signing-secret-with-sufficient-entropy', 2_000_000_000, '', 1_999_999_999), false)
 })
+
+test('signature is not reusable for another virtual path', async () => {
+  const secret = 'ci-stage5-signing-secret-with-sufficient-entropy'
+  const expires = 2_000_000_000
+  const signature = await createDownloadSignature('/remote/one.txt', secret, expires)
+  assert.equal(await verifyDownloadSignature('/remote/two.txt', secret, expires, signature, expires - 1), false)
+})
