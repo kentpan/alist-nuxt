@@ -84,7 +84,7 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
   await adapter.move('/remote/upload.txt', '/remote/folder')
   await adapter.remove('/remote/folder/hello.txt')
 
-  assert.deepEqual(requests.map(item => item.method), ['PROPFIND', 'MKCOL', 'PUT', 'GET', 'PROPFIND', 'COPY', 'MOVE', 'DELETE'])
+  assert.deepEqual(requests.map(item => item.method), ['PROPFIND', 'MKCOL', 'PROPFIND', 'PUT', 'PROPFIND', 'GET', 'PROPFIND', 'COPY', 'MOVE', 'DELETE'])
   assert.equal(files.has('/dav/root/folder/upload.txt'), true)
   assert.equal(files.has('/dav/root/upload.txt'), false)
 })
