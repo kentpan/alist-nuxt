@@ -1,6 +1,7 @@
 import { fail, ok } from '../../utils/auth'
 import { fileObject, fsContext, isFsError, readFsInput } from '../../utils/fs-api'
 import { localStat, encodeVirtualPath } from '../../utils/storage'
+import { createDownloadSignature } from '../../utils/download-sign'
 export default defineEventHandler(async (event) => {
   const body = await readFsInput(event)
   const ctx = await fsContext(event, String(body.path ?? '/'))
