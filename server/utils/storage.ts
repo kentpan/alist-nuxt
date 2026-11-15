@@ -431,6 +431,7 @@ export async function localMkdir(resolved: ResolvedStorage): Promise<void> {
 }
 
 export async function localRename(resolved: ResolvedStorage, newName: string, overwrite = false): Promise<void> {
+  if (!resolved.relativePath) throw new StorageError('cannot rename a storage root', 403)
   if (resolved.remote) { await resolved.remote.rename(resolved.virtualPath, newName, overwrite); return }
   const { fs, path } = await nodeModules()
   validateNameComponent(newName)
@@ -451,6 +452,7 @@ export async function localMove(db: DatabaseAdapter, sourcePath: string, destina
   const sourceResolved = await resolveStorage(db, sourcePath)
   const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name))
   if (sourceResolved.remote || destinationResolved.remote) {
+    if (!sourceResolved.relativePath) throw new StorageError('cannot move a storage root', 403)
     if (!sourceResolved.remote || !destinationResolved.remote || sourceResolved.storage.id !== destinationResolved.storage.id) throw new StorageError('Cross-storage move involving WebDAV is not supported yet', 501)
     await sourceResolved.remote.move(sourcePath, destinationDir)
     return
@@ -479,6 +481,7 @@ export async function localCopy(db: DatabaseAdapter, sourcePath: string, destina
   const sourceResolved = await resolveStorage(db, sourcePath)
   const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name))
   if (sourceResolved.remote || destinationResolved.remote) {
+    if (!sourceResolved.relativePath) throw new StorageError('cannot copy a storage root', 403)
     if (!sourceResolved.remote || !destinationResolved.remote || sourceResolved.storage.id !== destinationResolved.storage.id) throw new StorageError('Cross-storage copy involving WebDAV is not supported yet', 501)
     await sourceResolved.remote.copy(sourcePath, destinationDir, overwrite)
     return
@@ -499,6 +502,7 @@ export async function localCopy(db: DatabaseAdapter, sourcePath: string, destina
 }
 
 export async function localRemove(resolved: ResolvedStorage): Promise<void> {
+  if (!resolved.relativePath) throw new StorageError('cannot remove a storage root', 403)
   if (resolved.remote) { await resolved.remote.remove(resolved.virtualPath); return }
   const { fs } = await nodeModules()
   if (!resolved.relativePath) throw new StorageError('cannot remove a storage root', 403)
