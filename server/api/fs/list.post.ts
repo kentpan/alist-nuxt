@@ -14,6 +14,6 @@ export default defineEventHandler(async (event) => {
     const start = (page - 1) * perPage
     const content = items.slice(start, start + perPage).map(item => fileObject(`${ctx.virtualPath.replace(/\/$/, '')}/${item.name}` || '/', item.name, item.size, item.isDir, item.modified, item.created))
     const permission = mergeRolePermissions(ctx.auth.roles, ctx.virtualPath)
-    return ok({ content, total, filtered_total: total, page, per_page: perPage, pages_total: Math.ceil(total / perPage), has_more: start + perPage < total, readme: '', header: '', write: hasPermission(permission, 3), provider: ctx.resolved.storage.driver })
+    return ok({ content, total, filtered_total: total, page, per_page: perPage, pages_total: Math.ceil(total / perPage), has_more: start + perPage < total, readme: '', header: '', write: hasPermission(permission, 3), provider: ctx.resolved.storage.driver.toLowerCase() })
   } catch (error: any) { return fail(error.message || 'list failed', error.statusCode ?? 500) }
 })
