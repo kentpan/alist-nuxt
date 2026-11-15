@@ -29,7 +29,7 @@ try {
   await page.getByLabel('新名称').fill('browser-renamed.txt')
   await page.getByRole('button', { name: '重命名' }).click()
   await page.getByText('browser-renamed.txt', { exact: true }).waitFor()
-  await page.getByText('browser-renamed.txt', { exact: true }).click()
+  await page.getByRole('button', { name: '选择' }).last().click()
 
   page.once('dialog', dialog => dialog.accept())
   await page.getByRole('button', { name: '删除' }).click()
