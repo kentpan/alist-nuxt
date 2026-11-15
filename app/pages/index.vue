@@ -73,7 +73,7 @@ async function loadFiles(path = currentPath.value) {
   busy.value = true
   error.value = ''
   try {
-    const result = await api<{ content: FileItem[]; total: number; provider: string; write: boolean }>(`/api/fs/list?path=${encodeURIComponent(path)}`)
+    const result = await api<{ content: FileItem[]; total: number; provider: string; write: boolean }>('/api/fs/list', { method: 'POST', body: { path } })
     currentPath.value = path
     files.value = result.content ?? []
     selectedPath.value = ''
