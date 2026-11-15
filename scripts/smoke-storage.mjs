@@ -23,7 +23,7 @@ async function api(path, { method = 'GET', body, token, headers = {} } = {}) {
 const login = await api('/api/auth/login', { method: 'POST', body: { username: 'admin', password } })
 const token = login.data.token
 assert.ok(token)
-const root = await api('/api/fs/list?path=%2F', { token })
+const configured = await api('/api/admin/storage/list', { token })\nassert.ok(configured.data.content.some(item => item.mount_path === '/'))\nconst createdStorage = await api('/api/admin/storage/create', { method: 'POST', token, body: { mount_path: '/secondary', driver: 'local', addition: { root_folder_path: './data/storage-secondary' } } })\nassert.equal(createdStorage.data.mount_path, '/secondary')\nconst afterCreate = await api('/api/admin/storage/list', { token })\nconst secondary = afterCreate.data.content.find(item => item.mount_path === '/secondary')\nassert.ok(secondary)\nawait api('/api/admin/storage/delete', { method: 'POST', token, body: { id: secondary.id } })\nconst root = await api('/api/fs/list?path=%2F', { token })
 assert.equal(root.data.provider, 'local')
 await api('/api/fs/mkdir', { method: 'POST', token, body: { path: '/stage3' } })
 await api('/api/fs/mkdir', { method: 'POST', token, body: { path: '/copies' } })

@@ -17,7 +17,7 @@ Status values: `implemented` means a route exists in this migration; it does not
 | Public | `/api/public/settings` | implemented | Only settings flagged public/read-only are returned |
 | Admin users | list/get/create/update/delete/cancel_2fa | implemented | Needs full pagination/filter/edge-case contract tests |
 | Admin roles | list/get/create/update/delete | implemented | Path scopes are normalized and stored as JSON |
-| Admin | local storage list/create | partial | Local driver only; update/delete, driver catalog, storage test/enable/disable and remaining admin settings are pending |\n| Admin | metadata, settings CRUD, message, index lifecycle, labels, external downloader settings, FRP | pending | Subsequent stages |
+| Admin | local storage list/create/delete | partial | Local driver only; update, driver catalog, storage test/enable/disable and remaining admin settings are pending |\n| Admin | metadata, settings CRUD, message, index lifecycle, labels, external downloader settings, FRP | pending | Subsequent stages |
 | Filesystem | `/api/fs/list`, `/api/fs/get`, mkdir, rename, move, copy, remove, raw upload, download | partial | Implemented for the local Node driver; pagination, range/proxy, batch semantics, cross-driver operations, search and archive remain pending |
 | Share | `/api/share/*`, public share auth/list/get | pending | Subsequent stages |
 | Protocols | WebDAV, S3, FTP, SFTP | pending | Subsequent stages |
