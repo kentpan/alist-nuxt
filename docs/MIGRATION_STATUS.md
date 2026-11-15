@@ -10,27 +10,40 @@
 - Nuxt 4.4.8 / Tailwind CSS 3.4.19 project shell.
 - Prisma 6 schema and SQLite migrations.
 - Runtime adapter selects Cloudflare D1 when bound, otherwise lazy-loads Node `node:sqlite`.
-- Isolated Node SQLite migrations, Node/D1 adapter contract tests, typecheck and Node build pass.
+- Node SQLite migrations, mocked D1 adapter contract tests, typecheck and Node build pass.
 
-## Stage 2 — authentication and permissions: complete for the implemented contract
+## Stage 2 — authentication and permissions: implemented contract
 - Alist-compatible SHA-256 static password hashing and salted password hashes.
 - HS256 JWTs with `username`, `pwd_ts`, issue/not-before/expiry claims; password timestamp invalidation and token revocation.
 - Login throttling, TOTP verification/QR generation, device keys, session TTL and max-device policy.
 - Guest/admin role seeding, permission-scope bitmasks, registration gate, current-user/profile/logout/public-settings APIs.
 - Admin user and role CRUD foundations.
-- CI runs a real Node server and verifies admin login, JWT, `/api/me`, admin user/role APIs, public settings, registration, logout and token revocation.
-- Remaining auth parity: LDAP, SSO, WebAuthn/passkeys, SSH keys, and full session-management edge cases.
+- Real Node-server CI covers admin login, JWT, `/api/me`, user/role APIs, public settings, registration, logout and revocation.
+- Remaining auth parity: LDAP, SSO, WebAuthn/passkeys, SSH keys, and exhaustive session-management edge cases.
 
-## Stage 3 — storage and filesystem: implementation in progress
-- Added Storage metadata migration and admin storage CRUD for the Local driver.
-- Added an upstream-derived catalog of 99 driver names. Only Local is implemented; the other 98 are explicitly marked pending, not exposed as working drivers.
-- Added Node-only Local filesystem operations: list/get/dirs/mkdir/rename/move/copy/remove/batch rename/regex rename/search, raw stream upload, multipart upload, and range-aware download.
-- Local storage is confined to its configured absolute root; path traversal and symlink escapes are rejected. Local filesystem access is intentionally unavailable on Cloudflare Edge.
-- Still pending: remote storage drivers, archive/decompression, offline download/task queue, signed media links, WebDAV/S3/FTP/SFTP protocol compatibility, and full upstream FS contract parity.
+## Stage 3 — Local storage and filesystem: complete for Local driver
+- Storage metadata migration and admin storage CRUD for Local.
+- Upstream-derived catalog of 99 driver names; Local is implemented, 98 remote/provider drivers remain explicitly pending.
+- Local filesystem operations: list/get/dirs/mkdir/rename/move/copy/remove/batch rename/regex rename/search, stream/multipart upload and range-aware download.
+- Local root confinement rejects traversal and symlink escapes. Local filesystem access is Node-only.
+- Upstream Local storage API integration tests and isolated filesystem API tests pass.
 
-## Remaining stages
-- Stage 4: Nuxt UI, admin storage/driver forms, file browser, preview/media and internationalization.
-- Stage 5: remote driver ports, Edge/D1 validation, browser interaction and broader integration tests.
-- Stage 6: final feature matrix, security review, clean release ZIP and v1.0.0 package.
+## Stage 4 — Nuxt file browser: complete for the implemented browser contract
+- Chinese-language login and file-management UI.
+- Local storage setup, directory navigation, folder creation, file upload, selection, rename, copy, move and delete.
+- Real Chromium CI passes login, folder creation, upload, rename and delete against the isolated Node server.
+- Remaining UI parity: full upstream admin console, storage/driver configuration forms for every provider, internationalization catalogue, shares and advanced file operations.
 
-All tests use isolated temporary storage and databases. No production service, database, credential or deployment is used.
+## Stage 5 — signed media preview and Edge compatibility: in progress
+- HMAC-SHA-256 signed media URLs using WebCrypto, with path binding and expiry.
+- Range-aware stream endpoint supports browser media seeking without exposing a bearer token in an HTML media element.
+- Browser preview for images, video, audio, PDF and text files.
+- CI now checks mocked D1 behavior, signature tampering/expiry, Node APIs, Chromium preview, and a Cloudflare Pages Edge build. No deployment is performed.
+- Cloudflare Edge can use D1 for metadata; Local filesystem storage remains intentionally Node-only. A supported remote Edge storage driver is still required for actual file access on Edge.
+
+## Stage 6 — remaining upstream parity and release
+- Remote storage driver ports (prioritize WebDAV and S3, then FTP/SFTP and remaining providers).
+- Archive listing/extraction, offline download/task queue, shares, full admin settings/index/labels/message/FRP features.
+- Full feature-by-feature parity matrix, Node/Edge integration against a real isolated D1 emulator, security review, clean `alist-nuxt-v1.0.0.zip` and final verification.
+
+All CI tests use isolated temporary databases and storage. No production service, credential, database, storage or deployment is used.
