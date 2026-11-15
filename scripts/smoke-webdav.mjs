@@ -135,7 +135,9 @@ try {
     body: 'duplicate'
   })
   const duplicateBody = await duplicateUpload.json()
-    assert.equal(duplicateBody.code, 409, JSON.stringify(duplicateBody))
+  // Alist-style API failures use the JSON envelope; HTTP transport remains 200.
+  assert.equal(duplicateUpload.ok, true, JSON.stringify(duplicateBody))
+  assert.equal(duplicateBody.code, 409, JSON.stringify(duplicateBody))
 
   const info = await api('/api/fs/get', 'POST', { path: '/webdav/upload.txt' })
   const signed = await fetch(new URL(info.raw_url, base), { headers: { Range: 'bytes=1-3' } })
