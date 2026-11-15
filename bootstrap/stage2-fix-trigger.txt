@@ -1,1 +1,1 @@
-Retry Stage 2 through the dedicated fixup workflow.
+Retry Stage 2: SQL now uses char(47), char(), and json_array() expressions for path, empty string, and empty JSON literals.
