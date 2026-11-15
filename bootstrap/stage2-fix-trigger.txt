@@ -1,1 +1,1 @@
-Re-run Stage 2 after fixing explicit TypeScript module resolution.
+Retry Stage 2 after correcting CryptoJS CommonJS interop.
