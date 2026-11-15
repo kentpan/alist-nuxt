@@ -1,1 +1,1 @@
-Retry Stage 2 after correcting CryptoJS CommonJS interop.
+Retry Stage 2 after strict TypeScript index-safety fixes.
