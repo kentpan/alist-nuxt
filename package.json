@@ -15,7 +15,8 @@
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "node --experimental-strip-types scripts/seed.ts"
+    "db:seed": "node --experimental-strip-types scripts/seed.ts",
+    "db:rotate-webdav-credentials": "node --experimental-strip-types --experimental-sqlite scripts/rotate-webdav-credentials.mjs"
   },
   "dependencies": {
     "@prisma/adapter-d1": "6.19.1",
