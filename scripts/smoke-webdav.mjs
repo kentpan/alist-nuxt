@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 
+assert.ok(typeof assert.strictEqual === 'function', 'node:assert must be imported as an executable module')
+
 const base = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:3000'
 const password = process.env.BOOTSTRAP_ADMIN_PASSWORD || ''
 const davRoot = '/dav/root/'
