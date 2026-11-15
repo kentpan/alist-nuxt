@@ -1,9 +1,12 @@
-name: Stage 4 - Browser interaction test
+name: Stage 4 - Browser interaction test (current filesystem contract)
 on:
   push:
     branches: [main]
     paths:
       - 'app/**'
+      - 'server/**'
+      - 'prisma/**'
+      - 'scripts/seed-storage.mjs'
       - 'scripts/smoke-browser.mjs'
       - '.github/workflows/stage4-browser.yml'
 permissions:
