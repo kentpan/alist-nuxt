@@ -62,10 +62,11 @@ test('storage resolver decrypts encrypted WebDAV credentials only with the confi
     return new Response(listing, { status: 207 })
   }
   try {
-    const resolved = await resolveStorage({ all: async () => [encryptedRow] } as any, '/remote', secret)
-    await resolved.remote!.get('/remote')
+    const resolved = await resolveStorage({ all: async () => [encryptedRow] }, '/remote', secret)
+    assert.ok(resolved.remote)
+    await resolved.remote.get('/remote')
     assert.equal(authorization, `Basic ${btoa('test-user:test-password')}`)
-    await assert.rejects(resolveStorage({ all: async () => [encryptedRow] } as any, '/remote'), /could not be decrypted/)
+    await assert.rejects(resolveStorage({ all: async () => [encryptedRow] }, '/remote'), /could not be decrypted/)
   } finally {
     globalThis.fetch = originalFetch
   }
