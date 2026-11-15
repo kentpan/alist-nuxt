@@ -15,6 +15,7 @@ on:
       - 'tests/storage*'
       - 'app/pages/index.vue'
       - 'scripts/smoke-fs.mjs'
+      - 'scripts/smoke-webdav.mjs'
       - 'scripts/smoke-browser.mjs'
   pull_request:
     branches: [main]
@@ -117,4 +118,5 @@ jobs:
           node scripts/smoke-auth.mjs
           node scripts/smoke-fs.mjs
           node scripts/seed-storage.mjs
+          node scripts/smoke-webdav.mjs
           node scripts/smoke-browser.mjs
