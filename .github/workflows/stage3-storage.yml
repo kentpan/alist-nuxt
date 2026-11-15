@@ -1,4 +1,4 @@
-name: Stage 3 - Local storage API integration
+name: Stage 3 - Local storage API integration (upstream contract)
 on:
   push:
     branches: [main]
@@ -6,8 +6,12 @@ on:
       - 'server/utils/storage.ts'
       - 'server/api/fs/**'
       - 'server/api/admin/storage/**'
-      - 'scripts/seed-storage.mjs'
-      - 'scripts/smoke-storage.mjs'
+      - 'server/utils/fs-api.ts'
+      - 'server/routes/d/**'
+      - 'drivers/catalog.json'
+      - 'scripts/smoke-fs.mjs'
+      - 'tests/storage-path.test.mjs'
+      - 'tests/storage-runtime.test.mjs'
       - '.github/workflows/stage3-storage.yml'
 permissions:
   contents: read
@@ -44,7 +48,6 @@ jobs:
           mkdir -p data
           npm run db:migrate
           npm run db:seed
-          node scripts/seed-storage.mjs
       - name: Exercise real local filesystem APIs
         env:
           NUXT_DATABASE_PATH: ./data/ci.db
@@ -52,6 +55,7 @@ jobs:
           BOOTSTRAP_ADMIN_PASSWORD: stage3-ci-only-password
           NITRO_HOST: 127.0.0.1
           NITRO_PORT: 3000
+          FS_SMOKE_ROOT: ./data/fs-storage
         run: |
           set -euo pipefail
           node .output/server/index.mjs > /tmp/alist-stage3-server.log 2>&1 &
@@ -61,4 +65,4 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
             sleep 1
           done
-          node scripts/smoke-storage.mjs
+          node scripts/smoke-fs.mjs
