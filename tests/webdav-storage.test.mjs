@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { resolveStorage, localList, localMkdir, validateWebDavAddition } from '../server/utils/storage.ts'
+import { resolveStorage, localList, localMkdir, localRemove, localRename, localMove, localCopy, validateWebDavAddition } from '../server/utils/storage.ts'
 
 const row = {
   id: 77, mountPath: '/remote', driver: 'WebDav', addition: JSON.stringify({ url: 'https://dav.example/dav/root/', username: 'test', password: 'secret' }),
@@ -39,4 +39,13 @@ test('WebDAV storage config rejects insecure non-loopback endpoints and embedded
   assert.throws(() => validateWebDavAddition({ url: 'http://dav.example/root' }), /HTTPS/)
   assert.throws(() => validateWebDavAddition({ url: 'https://user:pass@dav.example/root' }), /embedded credentials/)
   assert.doesNotThrow(() => validateWebDavAddition({ url: 'http://127.0.0.1:8080/dav' }))
+})
+
+test('WebDAV mount roots cannot be renamed, moved, copied or removed', async () => {
+  const db = { all: async () => [row] }
+  const root = await resolveStorage(db, '/remote')
+  await assert.rejects(localRename(root, 'renamed'), /storage root/)
+  await assert.rejects(localRemove(root), /storage root/)
+  await assert.rejects(localMove(db, '/remote', '/remote', 'remote'), /storage root/)
+  await assert.rejects(localCopy(db, '/remote', '/remote', 'remote'), /storage root/)
 })
