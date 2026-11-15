@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
     return sendStream(event, stream)
   } catch (error: any) {
     if (error instanceof StorageError) return send(event, error.message, error.statusCode)
-    return send(event, error.message || 'file stream failed', 404)
+    return send(event, error.message || 'file stream failed', error.statusCode ?? 404)
   }
 })
 
