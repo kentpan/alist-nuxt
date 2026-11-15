@@ -1,1 +1,1 @@
-Retry Stage 2 after fixing SQLite string literal quoting.
+Retry Stage 2 with SQLite SQL string quoting patch applied.
