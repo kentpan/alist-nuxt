@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { decryptCredential, encryptCredential, protectWebDavAddition, revealWebDavAddition } from '../server/utils/credential-crypto.ts'
+import { decryptCredential, encryptCredential, protectWebDavAddition, revealWebDavAddition, rotateWebDavAddition } from '../server/utils/credential-crypto.ts'
 
 const secret = 'stage6-test-only-key-with-at-least-32-characters'
 
@@ -28,4 +28,16 @@ test('credential encryption requires a strong configured key and authenticates c
   await assert.rejects(encryptCredential('secret-value', ''), /at least 32 characters/)
   const encrypted = await encryptCredential('secret-value', secret)
   await assert.rejects(decryptCredential(encrypted, 'wrong-key-that-is-long-enough-for-aes-gcm'), /decrypt|operation|tag/i)
+})
+
+test('WebDAV credentials can be rotated from a legacy plaintext or old AES-GCM key', async () => {
+  const oldKey = 'stage6-old-key-with-at-least-32-characters-long'
+  const newKey = 'stage6-new-key-with-at-least-32-characters-long'
+  const oldAddition = await protectWebDavAddition({ username: 'old-user', password: 'old-password' }, oldKey)
+  const rotated = await rotateWebDavAddition(oldAddition, oldKey, newKey)
+  assert.notEqual(rotated.password, oldAddition.password)
+  assert.equal((await revealWebDavAddition(rotated, newKey)).password, 'old-password')
+  await assert.rejects(revealWebDavAddition(rotated, oldKey), /decrypt|operation|tag/i)
+  const migratedLegacy = await rotateWebDavAddition({ username: 'legacy-user', password: 'legacy-password' }, '', newKey)
+  assert.equal((await revealWebDavAddition(migratedLegacy, newKey)).username, 'legacy-user')
 })
