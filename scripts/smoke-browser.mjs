@@ -41,6 +41,35 @@ try {
   await page.getByRole('button', { name: '删除' }).click()
   await page.getByText('browser-renamed.txt', { exact: true }).waitFor({ state: 'detached' })
 
+  const authToken = await page.evaluate(() => {
+    const entry = document.cookie.split('; ').find(value => value.startsWith('alist_token='))
+    return entry ? decodeURIComponent(entry.slice('alist_token='.length)) : ''
+  })
+  assert.ok(authToken, 'Alist auth cookie should be available for admin storage API')
+  const storageList = await page.evaluate(async token => {
+    const response = await fetch('/api/admin/storage/list', { headers: { authorization: token } })
+    return response.json()
+  }, authToken)
+  const localStorage = storageList.data?.content?.find(item => item.mount_path === '/local')
+  assert.ok(localStorage?.id, 'seeded Local storage should be listed')
+  const deleted = await page.evaluate(async ({ token, id }) => {
+    const response = await fetch('/api/admin/storage/delete', {
+      method: 'POST',
+      headers: { authorization: token, 'content-type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    return response.json()
+  }, { token: authToken, id: localStorage.id })
+  assert.equal(deleted.code, 200, JSON.stringify(deleted))
+  await page.getByRole('button', { name: '刷新' }).click()
+  await page.getByText('还没有配置存储', { exact: true }).waitFor()
+  await page.locator('select').selectOption('WebDav')
+  await page.getByLabel('WebDAV 地址（HTTPS）').fill('https://dav.example.invalid/remote.php/dav/')
+  await page.getByLabel('用户名').fill('browser-test-user')
+  await page.getByLabel('密码').fill('browser-test-password')
+  assert.equal(await page.locator('select').inputValue(), 'WebDav')
+  assert.equal(await page.getByLabel('密码').inputValue(), 'browser-test-password')
+
   assert.deepEqual(pageErrors, [], `Browser runtime errors: ${pageErrors.join('; ')}`)
   process.stdout.write('Stage 5 browser test passed: login, folder creation, upload, signed text preview, rename and delete.\n')
 } finally {
