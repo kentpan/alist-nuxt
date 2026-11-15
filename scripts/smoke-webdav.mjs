@@ -117,6 +117,8 @@ try {
     addition: { url: davUrl, username: 'ci', password: 'only-test' }
   })
   assert.ok(created.id)
+  const updated = await api('/api/admin/storage/update', 'POST', { id: created.id, driver: 'WebDav', addition: { url: davUrl, username: 'ci', password: 'only-test' } })
+  assert.equal(updated.id, created.id)
   const initial = await api('/api/fs/list', 'POST', { path: '/webdav' })
   assert.ok(initial.content.some(item => item.name === 'folder' && item.is_dir))
   await api('/api/fs/mkdir', 'POST', { path: '/webdav/new-folder' })
