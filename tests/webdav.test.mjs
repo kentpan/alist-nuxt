@@ -52,3 +52,29 @@ test('WebDAV maps authentication and missing-resource responses to safe status e
   })
   await assert.rejects(adapter.get('/remote/file'), error => error.statusCode === 403 && !error.message.includes('secret'))
 })
+
+test('WebDAV PUT, MOVE, COPY and range GET forward the correct HTTP contract', async () => {
+  const calls = []
+  const adapter = createWebDavAdapter({
+    mountPath: '/remote',
+    url: 'https://dav.example/dav/root/',
+    fetcher: async (url, init) => {
+      calls.push({ url: String(url), init })
+      if (init.method === 'PROPFIND') return new Response(multistatus, { status: 207 })
+      if (init.method === 'GET') return new Response('bytes 2-5', { status: 206, headers: { 'content-range': 'bytes 2-5/10', 'content-type': 'application/octet-stream' } })
+      return new Response('', { status: 201 })
+    }
+  })
+  await adapter.put('/remote/new file.txt', new TextEncoder().encode('hello'), true)
+  await adapter.move('/remote/new file.txt', '/remote/folder one')
+  await adapter.copy('/remote/a file.txt', '/remote/folder one', true)
+  const read = await adapter.openRead('/remote/a file.txt', 'bytes=2-5')
+  assert.equal(read.status, 206)
+  assert.equal(read.headers.get('content-range'), 'bytes 2-5/10')
+  assert.equal(await new Response(read.stream).text(), 'bytes 2-5')
+  assert.equal(calls[0].init.method, 'PUT')
+  assert.equal(calls[0].url, 'https://dav.example/dav/root/new%20file.txt')
+  assert.equal(calls.find(call => call.init.method === 'MOVE').init.headers.Overwrite, 'F')
+  assert.equal(calls.find(call => call.init.method === 'COPY').init.headers.Overwrite, 'T')
+  assert.equal(calls.find(call => call.init.method === 'GET').init.headers.Range, 'bytes=2-5')
+})
