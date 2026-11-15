@@ -1,0 +1,30 @@
+name: Stage 3 - Clean release package
+on:
+  workflow_run:
+    workflows: ["Stage 3 - Local filesystem integration"]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  package:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build and verify clean ZIP
+        run: |
+          set -euo pipefail
+          rm -rf data download
+          mkdir -p download
+          zip -qr download/alist-nuxt-stage3.zip . -x '.git/*' 'node_modules/*' '.nuxt/*' '.output/*' 'download/*' 'data/*' '.env' 'bootstrap/*' '.github/workflows/stage3-unpack.yml'
+          unzip -t download/alist-nuxt-stage3.zip
+          sha256sum download/alist-nuxt-stage3.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alist-nuxt-stage3-package
+          path: download/alist-nuxt-stage3.zip
+          if-no-files-found: error
+          retention-days: 30
