@@ -46,6 +46,7 @@ const dav = createServer(async (req, res) => {
     resources.set(key, { directory: true }); res.writeHead(201).end(); return
   }
   if (req.method === 'PUT') {
+    if (req.headers['if-none-match'] === '*' && resources.has(key)) { res.writeHead(412).end(); return }
     const chunks = []
     for await (const chunk of req) chunks.push(chunk)
     resources.set(key, { directory: false, data: Buffer.concat(chunks) })
@@ -125,6 +126,14 @@ try {
   const uploadBody = await uploadResponse.json()
   assert.equal(uploadResponse.ok, true, JSON.stringify(uploadBody))
   assert.equal(uploadBody.code, 200, JSON.stringify(uploadBody))
+  const duplicateUpload = await fetch(new URL('/api/fs/put', base), {
+    method: 'PUT',
+    headers: { authorization: token, 'client-id': 'alist-webdav-smoke', 'File-Path': encodeURIComponent('/webdav/upload.txt'), 'Overwrite': 'false' },
+    body: 'duplicate'
+  })
+  const duplicateBody = await duplicateUpload.json()
+  assert.equal(duplicateUpload.status, 409, JSON.stringify(duplicateBody))
+  assert.equal(duplicateBody.code, 409, JSON.stringify(duplicateBody))
 
   const info = await api('/api/fs/get', 'POST', { path: '/webdav/upload.txt' })
   const signed = await fetch(new URL(info.raw_url, base), { headers: { Range: 'bytes=1-3' } })
