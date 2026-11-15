@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'bootstrap/stage2-part-5.b64'
+      - 'bootstrap/stage2-fix-trigger.txt'
 permissions:
   contents: write
   actions: write
@@ -24,7 +25,9 @@ jobs:
           cat bootstrap/stage2-part-{1..5}.b64 | base64 -d > /tmp/stage2-delta.tar.gz
           echo "6646ae82f7c4b4b6011befdc2ab54e0b9aebbab078368c8c9bef18271d3bdf50  /tmp/stage2-delta.tar.gz" | sha256sum -c -
           tar -xzf /tmp/stage2-delta.tar.gz -C .
-          rm -f bootstrap/stage2-part-*.b64
+          sed -i "s|from './database'|from './database.ts'|" server/utils/auth.ts
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('tsconfig.json','utf8')); p.compilerOptions.allowImportingTsExtensions=true; fs.writeFileSync('tsconfig.json', JSON.stringify(p,null,2)+'\\n')"
+          rm -f bootstrap/stage2-part-*.b64 bootstrap/stage2-fix-trigger.txt
       - name: Install dependencies and generate lockfile
         run: npm install --no-audit --no-fund
       - name: Unit and migration tests
