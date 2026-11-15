@@ -1,0 +1,5 @@
+Backend: https://github.com/AlistGo/alist
+Backend commit: 92e745360766cce32564f94a468cb576f577d27e
+Frontend: https://github.com/AlistGo/alist-web
+Frontend commit: 907756a8d5dff27d6b73036734de0a6533ace553
+Archives are unmodified GitHub source ZIPs. SHA-256 values are in SHA256SUMS.
