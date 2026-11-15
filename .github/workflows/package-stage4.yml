@@ -1,0 +1,38 @@
+name: Stage 4 - Clean distribution package
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'server/**'
+      - 'scripts/smoke-browser.mjs'
+      - 'docs/**'
+      - '.github/workflows/package-stage4.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build clean Stage 4 distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data download
+          mkdir -p download
+          zip -qr download/alist-nuxt-stage4.zip . -x '.git/*' 'node_modules/*' '.nuxt/*' '.output/*' 'download/*'
+          unzip -t download/alist-nuxt-stage4.zip
+          if unzip -Z1 download/alist-nuxt-stage4.zip | grep -E '(^|/)(\.env$|[^/]+\.db(-[^/]*)?$|[^/]+\.sqlite3?$)'; then
+            echo 'Refusing to publish a package containing environment files or database files.'
+            exit 1
+          fi
+          test -s download/alist-nuxt-stage4.zip
+          sha256sum download/alist-nuxt-stage4.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alist-nuxt-stage4-clean-package
+          path: download/alist-nuxt-stage4.zip
+          if-no-files-found: error
+          retention-days: 30
