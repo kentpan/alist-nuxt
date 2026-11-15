@@ -32,6 +32,10 @@ export function normalizeVirtualPath(value: string): string {
   return segments.length ? `/${segments.join('/')}` : '/'
 }
 
+function pathJoin(directory: string, name: string): string {
+  return normalizeVirtualPath(`${directory}/${name}`)
+}
+
 function isWithinMount(pathValue: string, mountPath: string): boolean {
   return mountPath === '/' || pathValue === mountPath || pathValue.startsWith(`${mountPath}/`)
 }
