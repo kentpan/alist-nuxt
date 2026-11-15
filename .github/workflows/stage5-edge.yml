@@ -1,0 +1,63 @@
+name: Stage 5 - Edge and signed media validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'nuxt.config.ts'
+      - 'server/utils/database.ts'
+      - 'server/utils/storage.ts'
+      - 'server/utils/download-sign.ts'
+      - 'server/utils/fs-api.ts'
+      - 'server/routes/d/**'
+      - 'server/api/fs/**'
+      - 'tests/database-adapter.test.ts'
+      - 'tests/download-sign.test.mjs'
+      - 'tests/storage*'
+      - 'app/pages/index.vue'
+      - 'scripts/smoke-fs.mjs'
+      - 'scripts/smoke-browser.mjs'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'nuxt.config.ts'
+      - 'server/utils/database.ts'
+      - 'server/utils/storage.ts'
+      - 'server/utils/download-sign.ts'
+      - 'server/utils/fs-api.ts'
+      - 'server/routes/d/**'
+      - 'server/api/fs/**'
+      - 'tests/database-adapter.test.ts'
+      - 'tests/download-sign.test.mjs'
+      - 'tests/storage*'
+      - 'app/pages/index.vue'
+      - 'scripts/smoke-fs.mjs'
+      - 'scripts/smoke-browser.mjs'
+permissions:
+  contents: read
+jobs:
+  edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Unit tests including mocked D1 and HMAC signatures
+        run: npm test
+      - name: Validate Prisma schema
+        env:
+          DATABASE_URL: file:../data/ci.db
+        run: npx prisma validate
+      - name: Type check
+        run: npx nuxt typecheck
+      - name: Build Node server
+        run: npm run build
+      - name: Build Cloudflare Pages worker without deploying
+        env:
+          NITRO_PRESET: cloudflare_pages
+        run: npm run build
+      - name: Verify generated Edge worker entrypoint
+        run: test -s .output/server/index.mjs
