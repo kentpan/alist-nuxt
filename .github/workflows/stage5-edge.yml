@@ -17,6 +17,12 @@ on:
       - 'scripts/smoke-fs.mjs'
       - 'scripts/smoke-webdav.mjs'
       - 'scripts/smoke-browser.mjs'
+      - 'scripts/rotate-webdav-credentials.mjs'
+      - 'tests/credential-*.test.mjs'
+      - 'server/utils/credential-crypto.ts'
+      - 'server/api/admin/storage/**'
+      - 'package.json'
+      - '.env.example'
   pull_request:
     branches: [main]
     paths:
