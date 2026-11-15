@@ -1,0 +1,30 @@
+name: Stage 5 - Clean release package
+on:
+  workflow_run:
+    workflows: ["Stage 5 - Edge and signed media validation"]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  package:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build and verify clean Stage 5 ZIP
+        run: |
+          set -euo pipefail
+          rm -rf data download
+          mkdir -p download
+          zip -qr download/alist-nuxt-stage5.zip . -x '.git/*' 'node_modules/*' '.nuxt/*' '.output/*' 'download/*' 'data/*' '.env' 'bootstrap/*'
+          unzip -t download/alist-nuxt-stage5.zip
+          sha256sum download/alist-nuxt-stage5.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alist-nuxt-stage5-package
+          path: download/alist-nuxt-stage5.zip
+          if-no-files-found: error
+          retention-days: 30
