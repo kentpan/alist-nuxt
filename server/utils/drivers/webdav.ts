@@ -106,11 +106,11 @@ export function createWebDavAdapter(options: WebDavOptions) {
       await request('PUT', virtualPath, { headers: { 'Content-Type': 'application/octet-stream' }, body: data as BodyInit })
       return this.get(virtualPath)
     },
-    async rename(virtualPath: string, newName: string) {
+    async rename(virtualPath: string, newName: string, overwrite = false) {
       if (!newName || newName === '.' || newName === '..' || /[\\/\\0]/.test(newName)) throw new Error('Invalid file name')
       const parent = normalizeVirtualPath(virtualPath).split('/').slice(0, -1).join('/') || '/'
       const destination = normalizeVirtualPath(`${parent}/${newName}`)
-      await request('MOVE', virtualPath, { headers: { Destination: urlFor(destination).toString(), Overwrite: 'F' } })
+      await request('MOVE', virtualPath, { headers: { Destination: urlFor(destination).toString(), Overwrite: overwrite ? 'T' : 'F' } })
     },
     async move(virtualPath: string, destinationDir: string) {
       const name = virtualPath.split('/').filter(Boolean).pop() || ''
