@@ -1,5 +1,5 @@
 import { fail, ok, requireAdmin } from '../../../utils/auth'
-import { normalizeMountPath, validateLocalAddition } from '../../../utils/storage'
+import { normalizeMountPath, validateLocalAddition, validateWebDavAddition } from '../../../utils/storage'
 
 export default defineEventHandler(async (event) => {
   const context = await requireAdmin(event)
@@ -10,8 +10,9 @@ export default defineEventHandler(async (event) => {
   const old = await context.db.first<any>('SELECT * FROM Storage WHERE id = ?', [id])
   if (!old) return fail('storage not found', 404)
   const driverInput = String(body.driver ?? old.driver)
-  const driver = driverInput.toLowerCase()
-  if (driver !== 'local') return fail(`driver ${driverInput} is catalogued but not implemented yet`, 501)
+  const requestedDriver = driverInput.toLowerCase()
+  if (!['local', 'webdav'].includes(requestedDriver)) return fail(`driver ${driverInput} is catalogued but not implemented yet`, 501)
+  const driver = requestedDriver === 'webdav' ? 'WebDav' : 'Local'
   let mountPath: string
   try { mountPath = normalizeMountPath(String(body.mount_path ?? body.mountPath ?? old.mountPath)) }
   catch (error: any) { return fail(error.message, 400) }
@@ -20,9 +21,12 @@ export default defineEventHandler(async (event) => {
   let addition: Record<string, unknown>
   try { addition = typeof body.addition === 'string' ? JSON.parse(body.addition) : (body.addition ?? JSON.parse(old.addition || '{}')) }
   catch { return fail('addition must be valid JSON', 400) }
-  if (!(event as any).node?.req) return fail('Local storage configuration is supported only by the Node runtime', 501)
-  try { await validateLocalAddition(addition) }
-  catch (error: any) { return fail(error.message, error.statusCode ?? 400) }
+  try {
+    if (requestedDriver === 'local') {
+      if (!(event as any).node?.req) return fail('Local storage configuration is supported only by the Node runtime', 501)
+      await validateLocalAddition(addition)
+    } else validateWebDavAddition(addition)
+  } catch (error: any) { return fail(error.message, error.statusCode ?? 400) }
   const now = new Date().toISOString()
   await context.db.run('UPDATE Storage SET mountPath = ?, driver = ?, addition = ?, "order" = ?, disabled = ?, cacheExpiration = ?, status = ?, remark = ?, modified = ?, disableIndex = ?, enableSign = ?, orderBy = ?, orderDirection = ?, extractFolder = ?, webProxy = ?, webdavPolicy = ?, proxyRange = ?, downProxyUrl = ?, downProxySign = ?, updatedAt = ? WHERE id = ?', [
     mountPath, driver, JSON.stringify(addition), Number(body.order ?? old.order), body.disabled === undefined ? old.disabled : (body.disabled ? 1 : 0),
