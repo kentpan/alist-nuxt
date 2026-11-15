@@ -72,7 +72,9 @@ export function createWebDavAdapter(options: WebDavOptions) {
       if (href) {
         const hrefUrl = new URL(href, base)
         const basePath = base.pathname.endsWith('/') ? base.pathname : `${base.pathname}/`
-        const suffix = decodeURIComponent(hrefUrl.pathname.startsWith(basePath) ? hrefUrl.pathname.slice(basePath.length) : hrefUrl.pathname.replace(/^\\//, '')).replace(/\\/$/, '')
+        const rawSuffix = hrefUrl.pathname.startsWith(basePath) ? hrefUrl.pathname.slice(basePath.length) : (hrefUrl.pathname.startsWith('/') ? hrefUrl.pathname.slice(1) : hrefUrl.pathname)
+        const decodedSuffix = decodeURIComponent(rawSuffix)
+        const suffix = decodedSuffix.endsWith('/') ? decodedSuffix.slice(0, -1) : decodedSuffix
         target = normalizeVirtualPath(`${mountPath === '/' ? '' : mountPath}/${suffix}`)
       }
       return parseItem(entry, target)
