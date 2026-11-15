@@ -1,6 +1,7 @@
 import type { DatabaseAdapter } from './database.ts'
 import { cleanPath, isSubPath } from './auth.ts'
 import { createWebDavAdapter } from './drivers/webdav.ts'
+import { revealWebDavAddition } from './credential-crypto.ts'
 
 export interface StorageFile {
   name: string
@@ -303,7 +304,7 @@ export async function validateLocalAddition(addition: Record<string, unknown>): 
   }
 }
 
-export async function resolveStorage(db: DatabaseAdapter, virtualPath: string): Promise<ResolvedStorage> {
+export async function resolveStorage(db: DatabaseAdapter, virtualPath: string, credentialsKey = ''): Promise<ResolvedStorage> {
   const normalized = cleanPath(virtualPath)
   const rows = await db.all<StorageRow>('SELECT * FROM Storage WHERE disabled = 0 ORDER BY LENGTH(mountPath) DESC, "order" ASC, id ASC')
   const storage = rows.find(row => isSubPath(normalizeMountPath(row.mountPath), normalized))
@@ -315,6 +316,8 @@ export async function resolveStorage(db: DatabaseAdapter, virtualPath: string): 
   const mountRemainder = normalized.slice(mountPath.length)
   const relativePath = normalized === mountPath ? '' : (mountPath === '/' ? normalized.slice(1) : (mountRemainder.startsWith('/') ? mountRemainder.slice(1) : mountRemainder))
   if (storage.driver.toLowerCase() === 'webdav') {
+    try { addition = await revealWebDavAddition(addition, credentialsKey) }
+    catch { throw new StorageError('WebDAV credentials could not be decrypted; check NUXT_STORAGE_CREDENTIALS_KEY', 500) }
     const url = String(addition.url ?? addition.address ?? '')
     if (!url) throw new StorageError('WebDAV storage requires addition.url', 400)
     try {
