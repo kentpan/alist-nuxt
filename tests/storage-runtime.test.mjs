@@ -34,8 +34,7 @@ test('Local driver confines paths to its root and supports core filesystem opera
     assert.equal((await localList(await resolveStorage(db, '/local/docs'))).length, 1)
     assert.ok(rootStorage.rootPath === resolve(root))
     symlinkSync('/etc/passwd', join(root, 'escape'))
-    const escape = await resolveStorage(db, '/local/escape')
-    await assert.rejects(() => localStat(escape), error => error instanceof StorageError && error.statusCode === 403)
+    await assert.rejects(async () => localStat(await resolveStorage(db, '/local/escape')), error => error instanceof StorageError && error.statusCode === 403)
   } finally {
     rmSync(temp, { recursive: true, force: true })
   }
