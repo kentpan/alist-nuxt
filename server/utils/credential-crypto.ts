@@ -58,3 +58,19 @@ export async function revealWebDavAddition(addition: Record<string, unknown>, se
     ...(password ? { password: await decryptCredential(password, secret) } : {})
   }
 }
+
+export async function rotateCredential(value: string, oldSecret: string, newSecret: string): Promise<string> {
+  if (!value) return value
+  const plaintext = await decryptCredential(value, oldSecret)
+  return encryptCredential(plaintext, newSecret)
+}
+
+export async function rotateWebDavAddition(addition: Record<string, unknown>, oldSecret: string, newSecret: string): Promise<Record<string, unknown>> {
+  const username = String(addition.username ?? '')
+  const password = String(addition.password ?? '')
+  return {
+    ...addition,
+    ...(username ? { username: await rotateCredential(username, oldSecret, newSecret) } : {}),
+    ...(password ? { password: await rotateCredential(password, oldSecret, newSecret) } : {})
+  }
+}
