@@ -1,1 +1,1 @@
-Retry Stage 2 after strict TypeScript index-safety fixes.
+Retry Stage 2 after fixing SQLite string literal quoting.
