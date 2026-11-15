@@ -1,4 +1,4 @@
-import { fail, getCurrentUserPayload, ok, requireAuth } from '../../utils/auth'
+import { fail, getCurrentUserPayload, ok, requireAuth } from '../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const context = await requireAuth(event)
