@@ -56,7 +56,7 @@ export function createWebDavAdapter(options: WebDavOptions) {
     const response = await fetcher(urlFor(virtualPath), { ...init, method, headers: { ...headers, ...(init.headers as Record<string, string> | undefined) } })
     if (!response.ok && !(method === 'PROPFIND' && response.status === 207)) {
       const error = new Error(`WebDAV ${method} failed with HTTP ${response.status}`)
-      Object.assign(error, { statusCode: response.status === 404 ? 404 : response.status === 409 ? 409 : response.status === 401 || response.status === 403 ? 403 : response.status === 416 ? 416 : 502 })
+      Object.assign(error, { statusCode: response.status === 404 ? 404 : response.status === 409 ? 409 : response.status === 401 || response.status === 403 ? 403 : response.status === 412 ? 409 : response.status === 416 ? 416 : 502 })
       throw error
     }
     return response
@@ -101,11 +101,10 @@ export function createWebDavAdapter(options: WebDavOptions) {
     },
     async makeDir(virtualPath: string) { await request('MKCOL', virtualPath) },
     async put(virtualPath: string, data: Uint8Array, overwrite = false) {
-      if (!overwrite) {
-        try { await this.get(virtualPath); throw Object.assign(new Error('WebDAV destination already exists'), { statusCode: 409 }) }
-        catch (error: any) { if (error?.statusCode !== 404) throw error }
-      }
-      await request('PUT', virtualPath, { headers: { 'Content-Type': 'application/octet-stream' }, body: data as BodyInit })
+      await request('PUT', virtualPath, {
+        headers: { 'Content-Type': 'application/octet-stream', ...(overwrite ? {} : { 'If-None-Match': '*' }) },
+        body: data as BodyInit
+      })
       return this.get(virtualPath)
     },
     async rename(virtualPath: string, newName: string, overwrite = false) {
