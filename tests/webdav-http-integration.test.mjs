@@ -12,7 +12,7 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
     const url = new URL(req.url ?? '/', 'http://127.0.0.1')
     const path = decodeURIComponent(url.pathname)
     requests.push({ method: req.method ?? '', path, range: req.headers.range })
-    const body: Buffer[] = []
+    const body = []
     for await (const chunk of req) body.push(Buffer.from(chunk))
     const data = Buffer.concat(body)
     const send = (status, text = '') => { res.statusCode = status; res.end(text) }
