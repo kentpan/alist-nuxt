@@ -7,6 +7,23 @@ import { useDatabase } from './database.ts'
 export const STATIC_HASH_SALT = 'https://github.com/alist-org/alist'
 export const ROLE_GUEST = 1
 export const ROLE_ADMIN = 2
+export const PERM_SEE_HIDES = 0
+export const PERM_ACCESS_WITHOUT_PASSWORD = 1
+export const PERM_ADD_OFFLINE_DOWNLOAD = 2
+export const PERM_WRITE = 3
+export const PERM_RENAME = 4
+export const PERM_MOVE = 5
+export const PERM_COPY = 6
+export const PERM_REMOVE = 7
+export const PERM_WEBDAV_READ = 8
+export const PERM_WEBDAV_MANAGE = 9
+export const PERM_FTP_ACCESS = 10
+export const PERM_FTP_MANAGE = 11
+export const PERM_READ_ARCHIVES = 12
+export const PERM_DECOMPRESS = 13
+export const PERM_PATH_LIMIT = 14
+export const PERM_MCP_ACCESS = 15
+export const PERM_MCP_MANAGE = 16
 
 export interface UserRow {
   id: number

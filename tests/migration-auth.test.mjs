@@ -9,7 +9,7 @@ test('auth migration adds role, device session, login throttle and revocation ta
   const dir = mkdtempSync(join(tmpdir(), 'alist-auth-migration-'))
   const db = new DatabaseSync(join(dir, 'test.db'))
   try {
-    for (const name of ['0001_init/migration.sql', '0002_auth_roles_sessions/migration.sql', '0003_setting_metadata/migration.sql']) {
+    for (const name of ['0001_init/migration.sql', '0002_auth_roles_sessions/migration.sql', '0003_setting_metadata/migration.sql', '0004_storage_runtime/migration.sql']) {
       db.exec(readFileSync(new URL(`../prisma/migrations/${name}`, import.meta.url), 'utf8'))
     }
     const columns = db.prepare('PRAGMA table_info("User")').all().map(x => x.name)
@@ -18,6 +18,8 @@ test('auth migration adds role, device session, login throttle and revocation ta
     const settingColumns = db.prepare('PRAGMA table_info("Setting")').all().map(x => x.name)
     for (const column of ['help', 'type', 'options', 'group', 'flag', 'index']) assert.ok(settingColumns.includes(column))
     for (const table of ['Role', 'Session', 'RevokedToken', 'LoginAttempt']) assert.ok(tables.includes(table))
+    const storageColumns = db.prepare('PRAGMA table_info("Storage")').all().map(x => x.name)
+    for (const column of ['cacheExpiration', 'status', 'remark', 'modified', 'disableIndex', 'enableSign', 'webProxy', 'webdavPolicy', 'proxyRange', 'downProxyUrl', 'downProxySign']) assert.ok(storageColumns.includes(column))
     db.prepare('INSERT INTO User (username, passwordHash, updatedAt, roles) VALUES (?, ?, ?, ?)').run('test-user', 'hash', new Date().toISOString(), '[3]')
     db.prepare('INSERT INTO Role (name, permissionScopes) VALUES (?, ?)').run('reader', '[{"path":"/docs","permission":1}]')
     db.prepare('INSERT INTO Session (userId, deviceKey, lastActive) VALUES (1, ?, ?)').run('device-key', 1)

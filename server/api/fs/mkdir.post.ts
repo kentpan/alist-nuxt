@@ -1,18 +1,10 @@
-import { hasPermission, mergeRolePermissions, fail, ok, requireAuth } from '../../utils/auth'
-import { useDatabase } from '../../utils/database'
-import { normalizeVirtualPath, resolveStorageForPath } from '../../utils/storage'
-
+import { fail, ok } from '../../utils/auth'
+import { fsContext, isFsError, FS_PERMISSIONS } from '../../utils/fs-api'
+import { localMkdir } from '../../utils/storage'
 export default defineEventHandler(async (event) => {
-  const context = await requireAuth(event)
-  if ('error' in context) return fail(context.error, context.code)
-  const body = await readBody<{ path?: string }>(event)
-  const path = normalizeVirtualPath(String(body?.path ?? ''))
-  if (!hasPermission(mergeRolePermissions(context.roles, path), 3)) return fail('Write permission is required', 403)
-  try {
-    const storage = await resolveStorageForPath(await useDatabase(event), path)
-    await storage.makeDir(path)
-    return ok()
-  } catch (error: any) {
-    return fail(error?.message || 'Unable to create directory', 400)
-  }
+  const body = await readBody<any>(event)
+  const ctx = await fsContext(event, String(body?.path ?? ''), FS_PERMISSIONS.write)
+  if (isFsError(ctx)) return ctx.response
+  try { await localMkdir(ctx.resolved); return ok() }
+  catch (error: any) { return fail(error.message || 'mkdir failed', error.statusCode ?? 500) }
 })

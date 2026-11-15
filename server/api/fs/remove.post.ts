@@ -1,23 +1,22 @@
-import { hasPermission, mergeRolePermissions, fail, ok, requireAuth } from '../../utils/auth'
-import { useDatabase } from '../../utils/database'
-import { normalizeVirtualPath, resolveStorageForPath } from '../../utils/storage'
-
+import { fail, ok } from '../../utils/auth'
+import { fsContext, isFsError, FS_PERMISSIONS } from '../../utils/fs-api'
+import { localRemove } from '../../utils/storage'
+import { joinUserPath, resolveStorage } from '../../utils/storage'
 export default defineEventHandler(async (event) => {
-  const context = await requireAuth(event)
-  if ('error' in context) return fail(context.error, context.code)
-  const body = await readBody<{ names?: string[]; dir?: string }>(event)
-  const directory = normalizeVirtualPath(String(body?.dir ?? '/'))
-  const names = Array.isArray(body?.names) ? body.names : []
-  if (!names.length) return fail('At least one file name is required', 400)
-  if (!hasPermission(mergeRolePermissions(context.roles, directory), 7)) return fail('Remove permission is required', 403)
+  const body = await readBody<any>(event)
+  const dir = String(body?.dir ?? body?.path ?? '')
+  const names = Array.isArray(body?.names) ? body.names.map(String) : []
+  if (!dir || !names.length) return fail('dir and names are required', 400)
+  const ctx = await fsContext(event, dir, FS_PERMISSIONS.remove)
+  if (isFsError(ctx)) return ctx.response
   try {
-    const storage = await resolveStorageForPath(await useDatabase(event), directory)
     for (const name of names) {
-      if (!name || /[\\/\\0]/.test(name) || name === '.' || name === '..') return fail('Invalid file name', 400)
-      await storage.remove(normalizeVirtualPath(`${directory}/${name}`))
+      const full = joinUserPath(ctx.auth.user.basePath || '/', `${dir.replace(/\/$/, '')}/${name}`)
+      const itemContext = await fsContext(event, full, FS_PERMISSIONS.remove)
+      if (isFsError(itemContext)) return itemContext.response
+      const item = await resolveStorage(ctx.auth.db, full)
+      await localRemove(item)
     }
     return ok()
-  } catch (error: any) {
-    return fail(error?.message || 'Unable to remove files', 400)
-  }
+  } catch (error: any) { return fail(error.message || 'remove failed', error.statusCode ?? 500) }
 })

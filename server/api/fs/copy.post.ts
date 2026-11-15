@@ -1,24 +1,25 @@
-import { hasPermission, mergeRolePermissions, fail, ok, requireAuth } from '../../utils/auth'
-import { useDatabase } from '../../utils/database'
-import { normalizeVirtualPath, resolveStorageForPath } from '../../utils/storage'
-
+import { fail, ok } from '../../utils/auth'
+import { fsContext, isFsError, FS_PERMISSIONS } from '../../utils/fs-api'
+import { localCopy, joinUserPath } from '../../utils/storage'
 export default defineEventHandler(async (event) => {
-  const context = await requireAuth(event)
-  if ('error' in context) return fail(context.error, context.code)
-  const body = await readBody<{ src_dir?: string; dst_dir?: string; names?: string[]; overwrite?: boolean }>(event)
-  const srcDir = normalizeVirtualPath(String(body?.src_dir ?? '/'))
-  const dstDir = normalizeVirtualPath(String(body?.dst_dir ?? '/'))
-  const names = Array.isArray(body?.names) ? body.names : []
-  if (!names.length) return fail('At least one file name is required', 400)
-  if (!hasPermission(mergeRolePermissions(context.roles, srcDir), 6) || !hasPermission(mergeRolePermissions(context.roles, dstDir), 3)) return fail('Copy and destination write permissions are required', 403)
+  const body = await readBody<any>(event)
+  const sourceDir = String(body?.src_dir ?? '')
+  const destinationDir = String(body?.dst_dir ?? '')
+  const names = Array.isArray(body?.names) ? body.names.map(String) : []
+  if (!sourceDir || !destinationDir || !names.length) return fail('src_dir, dst_dir and names are required', 400)
+  const source = await fsContext(event, sourceDir, FS_PERMISSIONS.copy)
+  if (isFsError(source)) return source.response
+  const destination = await fsContext(event, destinationDir, FS_PERMISSIONS.copy)
+  if (isFsError(destination)) return destination.response
   try {
-    const storage = await resolveStorageForPath(await useDatabase(event), srcDir)
     for (const name of names) {
-      if (!name || /[\\/\\0]/.test(name) || name === '.' || name === '..') return fail('Invalid file name', 400)
-      await storage.copy(normalizeVirtualPath(`${srcDir}/${name}`), dstDir, body.overwrite === true)
+      const sourcePath = joinUserPath(source.auth.user.basePath || '/', `${sourceDir.replace(/\/$/, '')}/${name}`)
+      const sourceItem = await fsContext(event, sourcePath, FS_PERMISSIONS.copy)
+      if (isFsError(sourceItem)) return sourceItem.response
+      const destinationItem = await fsContext(event, `${destinationDir.replace(/\/$/, '')}/${name}`, FS_PERMISSIONS.copy)
+      if (isFsError(destinationItem)) return destinationItem.response
+      await localCopy(source.auth.db, sourcePath, destination.virtualPath, name, !!body.overwrite)
     }
     return ok()
-  } catch (error: any) {
-    return fail(error?.message || 'Unable to copy files', 400)
-  }
+  } catch (error: any) { return fail(error.message || 'copy failed', error.statusCode ?? 500) }
 })

@@ -39,10 +39,24 @@ model Storage {
   mountPath String   @unique
   driver    String
   addition  String   @default("{}")
-  order     Int      @default(0)
-  disabled  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  order            Int      @default(0)
+  disabled         Boolean  @default(false)
+  cacheExpiration  Int      @default(30)
+  status           String   @default("work")
+  remark           String   @default("")
+  modified         DateTime @default(now())
+  disableIndex     Boolean  @default(false)
+  enableSign       Boolean  @default(false)
+  orderBy          String   @default("")
+  orderDirection   String   @default("")
+  extractFolder    String   @default("")
+  webProxy         Boolean  @default(false)
+  webdavPolicy     String   @default("native_proxy")
+  proxyRange       Boolean  @default(false)
+  downProxyUrl     String   @default("")
+  downProxySign    Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Role {

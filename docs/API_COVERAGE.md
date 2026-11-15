@@ -1,31 +1,30 @@
 # API coverage matrix (pinned backend)
 
-Status values: `implemented` means a route exists in this migration; it does not imply complete parity until contract tests pass. `pending` means not migrated.
+Status values: `implemented` means a route exists and has the stated test coverage; `partial` means only a subset or one driver is implemented; `pending` means not migrated.
 
 | Upstream API group | Routes/features | Status | Notes |
 |---|---|---|---|
-| Auth | `/api/auth/login`, `/api/auth/login/hash` | implemented | Raw password and upstream static-hash login paths; SHA-256 compatibility tests |
-| Auth | `/api/auth/register` | implemented | Gated by `allow_register`; default role assignment |
-| Auth | `/api/me`, `/api/me/update`, `/api/auth/logout` | implemented | Current-user payload, password timestamp invalidation, token revocation and session deactivation |
-| Auth | `/api/auth/2fa/generate`, `/api/auth/2fa/verify` | implemented | TOTP HMAC-SHA1 and QR data URL |
-| Auth | LDAP login | pending | Requires LDAP configuration and integration tests |
-| Auth | SSO redirect/callback/token exchange | pending | Provider-specific OAuth/SAML behavior not yet migrated |
-| Auth | WebAuthn registration/login/credential management | pending | Requires challenge/session persistence and browser authenticator tests |
-| Auth | SSH public key management | pending | Pending |
-| User/session | Device session creation, refresh, TTL, max devices, evict-oldest/deny policy | implemented | Session list/evict APIs remain pending |
-| User/session | `/api/me/sessions`, `/api/me/sessions/evict`, `/api/admin/session/list`, `/api/admin/session/evict` | implemented | Needs concurrency and eviction contract tests |
-| Public | `/api/public/settings` | implemented | Only settings flagged public/read-only are returned |
-| Admin users | list/get/create/update/delete/cancel_2fa | implemented | Needs full pagination/filter/edge-case contract tests |
-| Admin roles | list/get/create/update/delete | implemented | Path scopes are normalized and stored as JSON |
-| Admin | local storage list/create/delete | partial | Local driver only; update, driver catalog, storage test/enable/disable and remaining admin settings are pending |\n| Admin | metadata, settings CRUD, message, index lifecycle, labels, external downloader settings, FRP | pending | Subsequent stages |
-| Filesystem | `/api/fs/list`, `/api/fs/get`, mkdir, rename, move, copy, remove, raw upload, download | partial | Implemented for the local Node driver; pagination, range/proxy, batch semantics, cross-driver operations, search and archive remain pending |
-| Share | `/api/share/*`, public share auth/list/get | pending | Subsequent stages |
-| Protocols | WebDAV, S3, FTP, SFTP | pending | Subsequent stages |
+| Auth | `/api/auth/login`, `/api/auth/login/hash`, register, logout, 2FA | implemented | Password hash compatibility, JWT, TOTP, registration gate and revocation tested in Node CI |
+| User/session | `/api/me`, profile update, session TTL/max devices | implemented | `/api/me` and login/session lifecycle smoke-tested; exhaustive device eviction parity remains open |
+| User/session | session list/evict APIs | partial | Route implementations exist; pagination and device-eviction contract coverage remains open |
+| Public | `/api/public/settings` | implemented | Only public settings are returned |
+| Admin users/roles | list/get/create/update/delete | partial | Core CRUD and role scopes implemented; full upstream filters and all edge cases remain open |
+| Admin storage | list/get/create/update/delete/enable/disable/load_all | partial | CRUD currently supports only the Local driver; storage metadata migration added |
+| Admin driver | list/names/info | partial | Catalog contains 99 upstream driver names; only Local reports supported |
+| Filesystem read | `/api/fs/list`, `/api/fs/get`, `/api/fs/dirs` | partial | Local driver only; response contract is a compatibility subset |
+| Filesystem write | mkdir, rename, move, copy, remove, remove-empty-directory | partial | Local driver only; core operations and path confinement tests added |
+| Filesystem batch | batch rename, regex rename, search | partial | Local driver only; recursive regex rename and advanced search filters remain open |
+| Upload/download | `/api/fs/put`, `/api/fs/form`, `/d/*` | partial | Node raw/multipart upload and range-aware local download; signed links and Edge streaming pending |
+| Archive/offline tasks | archive list/meta/decompress, offline download, task queue | pending | Not represented by fake endpoints |
+| Storage drivers | 99 upstream driver names | partial | Local is implemented; 98 remote/provider drivers remain pending |
+| Share | `/api/share/*` | pending | Not migrated |
+| Protocols | WebDAV, S3, FTP, SFTP | pending | Not migrated |
+| Admin | settings, message, index lifecycle, labels, external downloader, FRP | pending | Not migrated |
 
-## Security/compatibility notes
-
-- The backend's built-in admin role uses role ID `2`, guest role ID `1`; the local seed preserves these IDs.
+## Security and compatibility notes
+- Local storage requires an absolute configured root path and refuses traversal and symlink escapes.
+- Local filesystem operations require the Node runtime; Cloudflare D1/Edge must use a remote driver, none of which is marked supported yet.
+- The backend's built-in admin role ID `2` and guest role ID `1` are preserved.
 - Password hashing follows upstream `StaticHash` + salted SHA-256 `TwoHashPwd` format.
-- The backend's `Authorization` header accepts a raw token; this migration also accepts `Bearer <token>`.
-- The admin API token is read from the private `token` setting or local `ADMIN_TOKEN` runtime configuration.
-- No production secrets, database or storage are provisioned by migrations or tests.
+- The `Authorization` header accepts a raw token and also accepts `Bearer <token>`.
+- No production secrets, databases, storage paths or deployments are provisioned by migrations or tests.
