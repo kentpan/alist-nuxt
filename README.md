@@ -15,7 +15,7 @@ This repository is a staged migration of the pinned upstream Alist backend and w
 - No production services, credentials, databases, or storage are configured.
 
 ## Local setup
-Requires Node.js >=22.13.0. Copy `.env.example` to `.env`, install dependencies with `npm install`, then run `npm run db:migrate`, `npm run db:seed`, and `npm run dev`. Set `BOOTSTRAP_ADMIN_PASSWORD` to a strong value before seeding; the placeholder value is deliberately refused. The Node adapter uses built-in `node:sqlite`; Cloudflare Workers use the `DB` D1 binding. D1 does not provide the same transactional guarantees as local SQLite; callers must not assume atomic rollback on D1.
+Requires Node.js >=22.13.0. Copy `.env.example` to `.env`, install dependencies with `npm install`, then run `npm run db:migrate`, `npm run db:seed`, and `npm run dev`. Set `BOOTSTRAP_ADMIN_PASSWORD` to a strong value before seeding; the placeholder value is deliberately refused. The Node adapter uses built-in `node:sqlite`; Cloudflare Workers use the `DB` D1 binding. D1 does not provide the same transactional guarantees as local SQLite; callers must not assume atomic rollback on D1. WebDav can use fetch on Node/Edge, but do not configure production credentials until at-rest encryption and real-provider validation are complete.
 
 ## Verification
 `npm test`, `npx prisma validate`, `npx nuxt typecheck`, and `npm run build`. CI additionally exercises the authentication and Local filesystem APIs against an isolated temporary directory. Local storage requires an absolute root path and is Node-only; do not point it at production data. All tests/builds must use an isolated local database only. Never commit `.env`, database files, JWT secrets, or the bootstrap password.
