@@ -25,6 +25,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add package-lock.json
           git commit -m 'chore: add npm lockfile' || true
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
       - name: Test local Node SQLite and D1 adapter contracts
         run: npm test
