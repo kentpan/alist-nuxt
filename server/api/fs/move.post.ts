@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
       if (isFsError(sourceItem)) return sourceItem.response
       const destinationItem = await fsContext(event, `${destinationDir.replace(/\/$/, '')}/${name}`, FS_PERMISSIONS.move)
       if (isFsError(destinationItem)) return destinationItem.response
-      await localMove(source.auth.db, sourcePath, destination.virtualPath, name, !!body.overwrite)
+      await localMove(source.auth.db, sourcePath, destination.virtualPath, name, !!body.overwrite, useRuntimeConfig(event).storageCredentialsKey)
     }
     return ok()
   } catch (error: any) { return fail(error.message || 'move failed', error.statusCode ?? 500) }
