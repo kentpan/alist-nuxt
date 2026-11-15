@@ -46,3 +46,11 @@ test('signed media URLs enforce the 24 hour maximum lifetime', async () => {
   assert.equal(await verifyDownloadSignature('/local/long-lived.bin', secret, expires, signature, expires - 86400), true)
   assert.equal(await verifyDownloadSignature('/local/long-lived.bin', secret, expires, signature, expires - 86401), false)
 })
+
+test('signed media URL verifier rejects signatures outside the allowed lifetime', async () => {
+  const secret = 'ci-stage5-signing-secret-with-sufficient-entropy'
+  const expiry = 2_000_000_000
+  const signature = await createDownloadSignature('/local/lifetime.bin', secret, expiry)
+  assert.equal(await verifyDownloadSignature('/local/lifetime.bin', secret, expiry, signature, expiry - 86400), true)
+  assert.equal(await verifyDownloadSignature('/local/lifetime.bin', secret, expiry, signature, expiry - 86401), false)
+})
