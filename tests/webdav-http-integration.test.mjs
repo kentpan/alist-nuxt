@@ -17,6 +17,8 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
     const data = Buffer.concat(body)
     const send = (status, text = '') => { res.statusCode = status; res.end(text) }
     if (req.method === 'PROPFIND') {
+      const directoryKey = path.endsWith('/') ? path : path + '/'
+      if (!files.has(path) && !directories.has(path) && !directories.has(directoryKey)) return send(404)
       const resources = req.headers.depth === '0' ? [path] : [path, ...[...files.keys(), ...directories].filter(item => item !== path && item.startsWith(path.endsWith('/') ? path : path + '/'))]
       const xml = resources.map(resource => {
         const name = resource.replace(/\/$/, '').split('/').pop() || 'root'
