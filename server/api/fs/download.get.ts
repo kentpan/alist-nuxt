@@ -1,4 +1,3 @@
-import { createReadStream } from 'node:fs'
 import { fail } from '../../utils/auth'
 import { fsContext, isFsError, readFsInput } from '../../utils/fs-api'
 import { localReadPath } from '../../utils/storage'
@@ -9,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (isFsError(ctx)) return ctx.response
   try {
     const target = await localReadPath(ctx.resolved)
-    const { promises: fs } = await import('node:fs')
+    const { createReadStream, promises: fs } = await import('node:fs')
     const stat = await fs.stat(target)
     if (!stat.isFile()) return fail('path is not a file', 400)
     const range = getHeader(event, 'range')
