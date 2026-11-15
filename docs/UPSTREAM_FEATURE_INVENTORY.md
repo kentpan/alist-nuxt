@@ -5,7 +5,7 @@ Source revisions: backend `92e745360766cce32564f94a468cb576f577d27e`; frontend `
 ## Verified source footprint
 - Backend archive: 859 files; Go module declares Go 1.25.0.
 - Frontend archive: 397 files; SolidJS + Vite application with pnpm lockfile.
-- Backend driver directory count: 93.
+- Backend driver directory count: 91 (verified by enumerating `drivers/**/driver.go` in the pinned archive).
 - Backend `server/router.go` contains 134 route declaration matches in the pinned tree.
 - Frontend page groups include home/file/folder/previews/uploads, login, share, and manage.
 
