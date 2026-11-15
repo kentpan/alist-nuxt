@@ -43,9 +43,10 @@
 - Cloudflare Edge can use D1 for metadata; Local filesystem storage remains intentionally Node-only. A supported remote Edge storage driver is still required for actual file access on Edge.
 
 ## Stage 6 — remaining upstream parity and release: in progress
-- Added an initial fetch-based WebDAV adapter prototype with mount-path confinement, PROPFIND listing/metadata, MKCOL, PUT, MOVE, COPY, DELETE and streamed GET; it is not yet wired into the filesystem API or enabled in the driver catalog.
-- Added mocked WebDAV contract tests for directory/file listing, URL encoding, mount confinement and authentication failures. Full end-to-end provider integration and credentials UI remain pending.
-- Next: integrate a provider-neutral storage interface across filesystem routes, then enable WebDAV only after isolated integration tests; follow with S3, archive/task/share/admin parity.
+- WebDAV is now wired into storage resolution and the filesystem API for list/get/dirs, mkdir, raw and multipart upload, rename, same-mount move/copy, remove, recursive search, download and signed range-aware media streaming. The fetch-based adapter is compatible with Node and Edge runtimes; Edge requires D1 for metadata.
+- Mocked tests cover WebDAV listing/metadata, URL encoding, mount confinement, auth failures, PUT, MOVE, COPY, range GET, configuration validation and storage resolver dispatch. Node/Edge build and unit/type checks are part of CI; no real WebDAV server or production credentials are used.
+- WebDAV remains experimental: no admin UI form, cross-storage move/copy, credential encryption at rest, real-provider interoperability matrix or end-to-end D1+WebDAV Edge test yet. Do not store production credentials in the current plaintext addition JSON.
+- Next: secure provider credentials, add a real isolated WebDAV integration server and browser configuration UI, then S3, archive/task/share/admin parity.
 - Archive listing/extraction, offline download/task queue, shares, full admin settings/index/labels/message/FRP features.
 - Full feature-by-feature parity matrix, Node/Edge integration against a real isolated D1 emulator, security review, clean `alist-nuxt-v1.0.0.zip` and final verification.
 
