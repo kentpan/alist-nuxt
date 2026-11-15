@@ -57,5 +57,4 @@ assert.equal(archived.data.content[0].name, 'renamed.txt')
 await api('/api/fs/remove', { method: 'POST', token, body: { dir: '/archive', names: ['renamed.txt'] } })
 await api('/api/fs/remove', { method: 'POST', token, body: { dir: '/stage3', names: ['renamed.txt'] } })
 assert.equal((await api('/api/fs/list?path=%2Fstage3', { token })).data.content.length, 0)
-process.stdout.write('Stage 3 local storage API integration passed: list, mkdir, streaming upload, download, rename, copy, move and remove.
-')
+process.stdout.write('Stage 3 local storage API integration passed: list, mkdir, streaming upload, download, rename, copy, move and remove.\n')
