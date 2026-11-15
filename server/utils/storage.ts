@@ -430,7 +430,7 @@ export async function localMkdir(resolved: ResolvedStorage): Promise<void> {
 }
 
 export async function localRename(resolved: ResolvedStorage, newName: string, overwrite = false): Promise<void> {
-  if (resolved.remote) { await resolved.remote.rename(resolved.virtualPath, newName); return }
+  if (resolved.remote) { await resolved.remote.rename(resolved.virtualPath, newName, overwrite); return }
   const { fs, path } = await nodeModules()
   validateNameComponent(newName)
   if (resolved.relativePath && resolved.relativePath.split('/').pop() === newName) return
