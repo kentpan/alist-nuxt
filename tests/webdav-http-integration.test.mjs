@@ -32,7 +32,7 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
       return
     }
     if (req.method === 'MKCOL') { directories.add(path.endsWith('/') ? path : path + '/'); return send(201) }
-    if (req.method === 'PUT') { files.set(path, data); return send(201) }
+    if (req.method === 'PUT') { if (req.headers['if-none-match'] === '*' && files.has(path)) return send(412); files.set(path, data); return send(201) }
     if (req.method === 'GET') {
       const value = files.get(path)
       if (!value) return send(404)
@@ -76,6 +76,7 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
   assert.deepEqual(listed.map(item => item.name), ['hello.txt'])
   await adapter.makeDir('/remote/folder')
   await adapter.put('/remote/upload.txt', new TextEncoder().encode('upload body'))
+  await assert.rejects(adapter.put('/remote/upload.txt', new TextEncoder().encode('duplicate')), error => error.statusCode === 409)
   const read = await adapter.openRead('/remote/hello.txt', 'bytes=1-4')
   assert.equal(read.status, 206)
   assert.equal(read.headers.get('content-range'), 'bytes 1-4/11')
