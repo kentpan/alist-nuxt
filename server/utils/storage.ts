@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from './database.ts'
 import { cleanPath, isSubPath } from './auth.ts'
+import { createWebDavAdapter } from './drivers/webdav.ts'
 
 export interface StorageFile {
   name: string
@@ -242,9 +243,10 @@ export interface ResolvedStorage {
   relativePath: string
   rootPath: string
   actualPath: string
+  remote?: ReturnType<typeof createWebDavAdapter>
 }
 
-const SUPPORTED_DRIVERS = new Set(['Local', 'local'])
+const SUPPORTED_DRIVERS = new Set(['Local', 'local', 'WebDav', 'webdav'])
 let nodeModulesPromise: Promise<{ fs: typeof import('node:fs/promises'); path: typeof import('node:path') }> | undefined
 
 async function nodeModules() {
@@ -295,6 +297,24 @@ export async function resolveStorage(db: DatabaseAdapter, virtualPath: string): 
   if (!SUPPORTED_DRIVERS.has(storage.driver) && !SUPPORTED_DRIVERS.has(storage.driver.toLowerCase())) throw new StorageError(`Driver ${storage.driver} is catalogued but not implemented in this runtime`, 501)
   let addition: Record<string, unknown>
   try { addition = JSON.parse(storage.addition || '{}') } catch { throw new StorageError(`Storage ${storage.mountPath} has invalid addition JSON`, 500) }
+  const mountPath = normalizeMountPath(storage.mountPath)
+  const relativePath = normalized === mountPath ? '' : (mountPath === '/' ? normalized.slice(1) : normalized.slice(mountPath.length).replace(/^\\//, ''))
+  if (storage.driver.toLowerCase() === 'webdav') {
+    const url = String(addition.url ?? addition.address ?? '')
+    if (!url) throw new StorageError('WebDAV storage requires addition.url', 400)
+    try {
+      const remote = createWebDavAdapter({
+        mountPath,
+        url,
+        username: String(addition.username ?? ''),
+        password: String(addition.password ?? '')
+      })
+      return { storage, virtualPath: normalized, relativePath, rootPath: '', actualPath: '', remote }
+    } catch (error: any) {
+      throw new StorageError(error.message || 'Invalid WebDAV configuration', 400)
+    }
+  }
+  if (storage.driver.toLowerCase() !== 'local') throw new StorageError(`Driver ${storage.driver} is catalogued but not implemented in this runtime`, 501)
   const rootValue = String(addition.root_path ?? addition.rootPath ?? addition.root_folder_path ?? addition.rootFolderPath ?? '')
   if (!rootValue) throw new StorageError(`Local storage ${storage.mountPath} requires addition.root_path`, 400)
   const { fs, path } = await nodeModules()
@@ -308,8 +328,6 @@ export async function resolveStorage(db: DatabaseAdapter, virtualPath: string): 
     if (error instanceof StorageError) throw error
     throw new StorageError(`Local storage root_path is unavailable: ${rootValue}`, 400)
   }
-  const mountPath = normalizeMountPath(storage.mountPath)
-  const relativePath = normalized === mountPath ? '' : (mountPath === '/' ? normalized.slice(1) : normalized.slice(mountPath.length).replace(/^\//, ''))
   const actualPath = await safeLocalPath(rootPath, relativePath, true)
   return { storage, virtualPath: normalized, relativePath, rootPath, actualPath }
 }
