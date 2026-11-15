@@ -42,8 +42,10 @@
 - Isolated Chromium CI passed login, folder creation, upload, signed text preview, rename and delete; API smoke tests passed authentication and Local filesystem operations. No deployment is performed.
 - Cloudflare Edge can use D1 for metadata; Local filesystem storage remains intentionally Node-only. A supported remote Edge storage driver is still required for actual file access on Edge.
 
-## Stage 6 — remaining upstream parity and release
-- Remote storage driver ports (prioritize WebDAV and S3, then FTP/SFTP and remaining providers).
+## Stage 6 — remaining upstream parity and release: in progress
+- Added an initial fetch-based WebDAV adapter prototype with mount-path confinement, PROPFIND listing/metadata, MKCOL, PUT, MOVE, COPY, DELETE and streamed GET; it is not yet wired into the filesystem API or enabled in the driver catalog.
+- Added mocked WebDAV contract tests for directory/file listing, URL encoding, mount confinement and authentication failures. Full end-to-end provider integration and credentials UI remain pending.
+- Next: integrate a provider-neutral storage interface across filesystem routes, then enable WebDAV only after isolated integration tests; follow with S3, archive/task/share/admin parity.
 - Archive listing/extraction, offline download/task queue, shares, full admin settings/index/labels/message/FRP features.
 - Full feature-by-feature parity matrix, Node/Edge integration against a real isolated D1 emulator, security review, clean `alist-nuxt-v1.0.0.zip` and final verification.
 
