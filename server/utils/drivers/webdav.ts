@@ -37,6 +37,7 @@ export function createWebDavAdapter(options: WebDavOptions) {
   const mountPath = normalizeVirtualPath(options.mountPath)
   const base = new URL(options.url)
   if (!['http:', 'https:'].includes(base.protocol)) throw new Error('WebDAV URL must use HTTP or HTTPS')
+  if (base.protocol !== 'https:' && !new Set(['localhost', '127.0.0.1', '[::1]']).has(base.hostname)) throw new Error('WebDAV requires HTTPS except for loopback test endpoints')
   if (base.username || base.password) throw new Error('Put WebDAV credentials in username/password fields, not in the URL')
   if (!base.pathname.endsWith('/')) base.pathname += '/'
   const fetcher = options.fetcher ?? fetch
@@ -55,7 +56,7 @@ export function createWebDavAdapter(options: WebDavOptions) {
     const response = await fetcher(urlFor(virtualPath), { ...init, method, headers: { ...headers, ...(init.headers as Record<string, string> | undefined) } })
     if (!response.ok && !(method === 'PROPFIND' && response.status === 207)) {
       const error = new Error(`WebDAV ${method} failed with HTTP ${response.status}`)
-      Object.assign(error, { statusCode: response.status === 404 ? 404 : response.status === 409 ? 409 : response.status === 401 || response.status === 403 ? 403 : 502 })
+      Object.assign(error, { statusCode: response.status === 404 ? 404 : response.status === 409 ? 409 : response.status === 401 || response.status === 403 ? 403 : response.status === 416 ? 416 : 502 })
       throw error
     }
     return response
@@ -79,7 +80,8 @@ export function createWebDavAdapter(options: WebDavOptions) {
       if (href) {
         const hrefUrl = new URL(href, base)
         const basePath = base.pathname.endsWith('/') ? base.pathname : `${base.pathname}/`
-        const rawSuffix = hrefUrl.pathname.startsWith(basePath) ? hrefUrl.pathname.slice(basePath.length) : (hrefUrl.pathname.startsWith('/') ? hrefUrl.pathname.slice(1) : hrefUrl.pathname)
+        if (!hrefUrl.pathname.startsWith(basePath)) throw new Error('WebDAV response href escaped the configured endpoint')
+        const rawSuffix = hrefUrl.pathname.slice(basePath.length)
         const decodedSuffix = decodeURIComponent(rawSuffix)
         const suffix = decodedSuffix.endsWith('/') ? decodedSuffix.slice(0, -1) : decodedSuffix
         target = normalizeVirtualPath(`${mountPath === '/' ? '' : mountPath}/${suffix}`)
