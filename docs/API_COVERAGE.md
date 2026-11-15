@@ -10,15 +10,16 @@ Status values: `implemented` means a route exists and has the stated test covera
 | Public | `/api/public/settings` | implemented | Only public settings are returned |
 | Admin users/roles | list/get/create/update/delete | partial | Core CRUD and role scopes implemented; full upstream filters and all edge cases remain open |
 | Admin storage | list/get/create/update/delete/enable/disable/load_all | partial | Local and experimental WebDav configuration CRUD; WebDav secrets are not encrypted at rest and admin UI form is pending |
-| Admin driver | list/names/info | partial | Catalog contains 99 upstream driver names; only Local reports supported |
-| Filesystem read | `/api/fs/list`, `/api/fs/get`, `/api/fs/dirs` | partial | Local and experimental WebDav; mock provider contract tests, no real-server interoperability suite |
+| Admin driver | list/names/info | partial | Catalog contains 99 upstream driver names; Local and experimental WebDav report supported |
+| Filesystem read | `/api/fs/list`, `/api/fs/get`, `/api/fs/dirs` | partial | Local and experimental WebDav; loopback HTTP integration test covers actual fetch requests for PROPFIND/MKCOL/PUT/GET/range/COPY/MOVE/DELETE |
 | Filesystem write | mkdir, rename, move, copy, remove, remove-empty-directory | partial | Local plus same-mount WebDav operations; cross-storage move/copy is not implemented |
 | Filesystem batch | batch rename, regex rename, search | partial | Local driver only; recursive regex rename and advanced search filters remain open |
 | Upload/download | `/api/fs/put`, `/api/fs/form`, `/d/*` | partial | Local Node streams plus WebDav raw/multipart uploads, range-forwarded download and signed media stream; Edge remote storage only |
 | Archive/offline tasks | archive list/meta/decompress, offline download, task queue | pending | Not represented by fake endpoints |
-| Storage drivers | 99 upstream driver names | partial | Local implemented; WebDav experimental; 97 other drivers pending |
+| Storage drivers | 99 upstream driver names | partial | Local and experimental WebDav implemented; 97 other drivers pending |
 | Share | `/api/share/*` | pending | Not migrated |
-| Protocols | WebDAV, S3, FTP, SFTP | pending | Not migrated |
+| Protocols | WebDAV | partial | Fetch-based adapter implemented; real loopback HTTP integration tested; production credential encryption, UI and provider matrix pending |
+| Protocols | S3, FTP, SFTP | pending | Not migrated |
 | Admin | settings, message, index lifecycle, labels, external downloader, FRP | pending | Not migrated |
 
 ## Security and compatibility notes
