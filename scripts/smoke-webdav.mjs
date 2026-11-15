@@ -1,4 +1,4 @@
-// Isolated loopback-only WebDAV endpoint; this smoke test never calls an external provider.
+// Exercises both a loopback fixture and a disposable Apache WebDAV provider when CI supplies one.
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 
