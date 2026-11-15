@@ -12,9 +12,9 @@ Status values: `implemented` means a route exists and has the stated test covera
 | Admin storage | list/get/create/update/delete/enable/disable/load_all | partial | Local and experimental WebDav configuration CRUD; WebDav secrets are not encrypted at rest and admin UI form is pending |
 | Admin driver | list/names/info | partial | Catalog contains 99 upstream driver names; Local and experimental WebDav report supported |
 | Filesystem read | `/api/fs/list`, `/api/fs/get`, `/api/fs/dirs` | partial | Local and experimental WebDav; loopback HTTP integration test covers actual fetch requests for PROPFIND/MKCOL/PUT/GET/range/COPY/MOVE/DELETE |
-| Filesystem write | mkdir, rename, move, copy, remove, remove-empty-directory | partial | Local plus same-mount WebDav operations; cross-storage move/copy is not implemented |
+| Filesystem write | mkdir, rename, move, copy, remove, remove-empty-directory | partial | Local plus same-mount WebDav operations; loopback integration tested, cross-storage move/copy is not implemented |
 | Filesystem batch | batch rename, regex rename, search | partial | Local driver only; recursive regex rename and advanced search filters remain open |
-| Upload/download | `/api/fs/put`, `/api/fs/form`, `/d/*` | partial | Local Node streams plus WebDav raw/multipart uploads, range-forwarded download and signed media stream; Edge remote storage only |
+| Upload/download | `/api/fs/put`, `/api/fs/form`, `/d/*` | partial | Local Node streams plus WebDav raw/multipart uploads, range-forwarded download and signed media stream; Node API integration tested, Edge remote storage build verified |
 | Archive/offline tasks | archive list/meta/decompress, offline download, task queue | pending | Not represented by fake endpoints |
 | Storage drivers | 99 upstream driver names | partial | Local and experimental WebDav implemented; 97 other drivers pending |
 | Share | `/api/share/*` | pending | Not migrated |
