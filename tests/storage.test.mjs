@@ -21,9 +21,11 @@ test('local storage supports list, mkdir, upload, rename, copy, move and remove'
     assert.equal((await storage.list('/docs')).length, 1)
     await storage.rename('/docs/a.txt', 'b.txt')
     await storage.copy('/docs/b.txt', '/')
-    await storage.move('/b.txt', '/docs')
-    assert.equal(await readFile(join(root, 'docs', 'b.txt'), 'utf8'), 'hello')
+    await storage.makeDir('/archive')
+    await storage.move('/b.txt', '/archive')
+    assert.equal(await readFile(join(root, 'archive', 'b.txt'), 'utf8'), 'hello')
     await storage.remove('/docs/b.txt')
+    await storage.remove('/archive/b.txt')
     assert.equal((await storage.list('/docs')).length, 0)
   } finally {
     await rm(root, { recursive: true, force: true })
