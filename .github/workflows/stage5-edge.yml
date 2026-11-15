@@ -101,6 +101,7 @@ jobs:
           NUXT_DATABASE_PATH: ./data/ci.db
           JWT_SECRET: stage5-ci-only-jwt-secret
           NUXT_JWT_SECRET: stage5-ci-only-jwt-secret
+          NUXT_STORAGE_CREDENTIALS_KEY: stage5-ci-only-webdav-key-with-at-least-32-characters
           BOOTSTRAP_ADMIN_PASSWORD: stage5-ci-only-password
           ALLOW_REGISTER: 'true'
           LOCAL_STORAGE_ROOT: ./data/storage
