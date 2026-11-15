@@ -1,1 +1,1 @@
-Retry Stage 2: use SQLite char(47) for slash literals in seed and auth inserts without altering TypeScript syntax.
+Retry Stage 2 through the dedicated fixup workflow.
