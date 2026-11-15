@@ -1,4 +1,11 @@
-import { normalizeVirtualPath, type StorageFile } from '../storage'
+import type { StorageFile } from '../storage.ts'
+
+function normalizeVirtualPath(value: string): string {
+  if (typeof value !== 'string' || value.includes('\\0')) throw new Error('Invalid path')
+  const segments = value.replace(/\\\\/g, '/').split('/').filter(Boolean)
+  if (segments.some(part => part === '.' || part === '..')) throw new Error('Path traversal is not allowed')
+  return segments.length ? `/${segments.join('/')}` : '/'
+}
 
 export interface WebDavOptions {
   mountPath: string
