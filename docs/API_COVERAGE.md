@@ -9,7 +9,7 @@ Status values: `implemented` means a route exists and has the stated test covera
 | User/session | session list/evict APIs | partial | Route implementations exist; pagination and device-eviction contract coverage remains open |
 | Public | `/api/public/settings` | implemented | Only public settings are returned |
 | Admin users/roles | list/get/create/update/delete | partial | Core CRUD and role scopes implemented; full upstream filters and all edge cases remain open |
-| Admin storage | list/get/create/update/delete/enable/disable/load_all | partial | Local and experimental WebDav configuration CRUD; WebDav secrets are not encrypted at rest and admin UI form is pending |
+| Admin storage | list/get/create/update/delete/enable/disable/load_all | partial | Local and experimental WebDav configuration CRUD; WebDAV credentials encrypted for new writes; Chinese onboarding form appears when no storage is configured, full storage management UI pending |
 | Admin driver | list/names/info | partial | Catalog contains 99 upstream driver names; Local and experimental WebDav report supported |
 | Filesystem read | `/api/fs/list`, `/api/fs/get`, `/api/fs/dirs` | partial | Local and experimental WebDav; loopback HTTP integration test covers actual fetch requests for PROPFIND/MKCOL/PUT/GET/range/COPY/MOVE/DELETE |
 | Filesystem write | mkdir, rename, move, copy, remove, remove-empty-directory | partial | Local plus same-mount WebDav operations; loopback integration tested, cross-storage move/copy is not implemented |
