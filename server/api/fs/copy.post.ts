@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
       if (isFsError(sourceItem)) return sourceItem.response
       const destinationItem = await fsContext(event, `${destinationDir.replace(/\/$/, '')}/${name}`, FS_PERMISSIONS.copy)
       if (isFsError(destinationItem)) return destinationItem.response
-      await localCopy(source.auth.db, sourcePath, destination.virtualPath, name, !!body.overwrite)
+      await localCopy(source.auth.db, sourcePath, destination.virtualPath, name, !!body.overwrite, useRuntimeConfig(event).storageCredentialsKey)
     }
     return ok()
   } catch (error: any) { return fail(error.message || 'copy failed', error.statusCode ?? 500) }
