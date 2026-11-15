@@ -17,7 +17,7 @@ test('credential rotation CLI defaults to dry-run and applies legacy encryption 
   db.close()
   const script = new URL('../scripts/rotate-webdav-credentials.mjs', import.meta.url)
   try {
-    const dryRun = spawnSync(process.execPath, [script.pathname], {
+    const dryRun = spawnSync(process.execPath, ['--experimental-strip-types', script.pathname], {
       encoding: 'utf8',
       env: { ...process.env, DATABASE_PATH: databasePath, NUXT_STORAGE_CREDENTIALS_KEY: newKey, OLD_STORAGE_CREDENTIALS_KEY: '' }
     })
@@ -28,7 +28,7 @@ test('credential rotation CLI defaults to dry-run and applies legacy encryption 
     assert.equal(plaintext.password, 'legacy-password')
     afterDryRun.close()
 
-    const apply = spawnSync(process.execPath, [script.pathname, '--apply'], {
+    const apply = spawnSync(process.execPath, ['--experimental-strip-types', script.pathname, '--apply'], {
       encoding: 'utf8',
       env: { ...process.env, DATABASE_PATH: databasePath, NUXT_STORAGE_CREDENTIALS_KEY: newKey, OLD_STORAGE_CREDENTIALS_KEY: '' }
     })
