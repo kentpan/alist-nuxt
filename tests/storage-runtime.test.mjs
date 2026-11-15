@@ -17,7 +17,8 @@ test('Local driver confines paths to its root and supports core filesystem opera
     for (const name of ['0001_init/migration.sql', '0002_auth_roles_sessions/migration.sql', '0003_setting_metadata/migration.sql', '0004_storage_runtime/migration.sql']) {
       raw.exec(readFileSync(new URL(`../prisma/migrations/${name}`, import.meta.url), 'utf8'))
     }
-    const now = new Date().toISOString()\n    raw.prepare('INSERT INTO Storage (mountPath, driver, addition, \\\"order\\\", disabled, createdAt, updatedAt) VALUES (?, ?, ?, ?, 0, ?, ?)').run('/local', 'Local', JSON.stringify({ root_path: root, show_hidden: false }), 0, now, now)
+    const now = new Date().toISOString()
+    raw.prepare('INSERT INTO Storage (mountPath, driver, addition, "order", disabled, createdAt, updatedAt) VALUES (?, ?, ?, ?, 0, ?, ?)').run('/local', 'Local', JSON.stringify({ root_path: root, show_hidden: false }), 0, now, now)
   } finally { raw.close() }
   const db = await createDatabase({ databasePath: dbPath })
   try {
