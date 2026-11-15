@@ -2,7 +2,6 @@ import { fail, ok } from '../../utils/auth'
 import { fsContext, isFsError, FS_PERMISSIONS } from '../../utils/fs-api'
 import { localWritePath } from '../../utils/storage'
 export default defineEventHandler(async (event) => {
-  if (!(event as any).node?.req) return fail('multipart upload is supported only by the Node runtime', 501)
   const parts = await readMultipartFormData(event)
   if (!parts?.length) return fail('multipart form data is required', 400)
   const pathPart = parts.find(part => part.name === 'path')
@@ -11,6 +10,14 @@ export default defineEventHandler(async (event) => {
   const virtualPath = pathPart.data.toString('utf8')
   const ctx = await fsContext(event, virtualPath, FS_PERMISSIONS.write)
   if (isFsError(ctx)) return ctx.response
+  if (ctx.resolved.remote) {
+    try {
+      const overwrite = String(getQuery(event).overwrite ?? 'true') !== 'false'
+      await ctx.resolved.remote.put(ctx.virtualPath, new Uint8Array(filePart.data), overwrite)
+      return ok()
+    } catch (error: any) { return fail(error.message || 'WebDAV multipart upload failed', error.statusCode ?? 502) }
+  }
+  if (!(event as any).node?.req) return fail('Local multipart upload is supported only by the Node runtime', 501)
   try {
     const [{ promises: fs }, path] = await Promise.all([import('node:fs'), import('node:path')])
     const target = await localWritePath(ctx.resolved)
