@@ -38,7 +38,12 @@ export async function createDatabase(options: { d1?: unknown; databasePath: stri
     }
   }
   // Keep node:sqlite out of the Cloudflare execution path; load it only without a D1 binding.
-  const { DatabaseSync } = await import('node:sqlite')
+  const [{ DatabaseSync }, { mkdirSync }, { dirname }] = await Promise.all([
+    import('node:sqlite'),
+    import('node:fs'),
+    import('node:path')
+  ])
+  if (options.databasePath !== ':memory:') mkdirSync(dirname(options.databasePath), { recursive: true })
   const db = new DatabaseSync(options.databasePath)
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
   return {
