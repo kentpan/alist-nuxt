@@ -8,5 +8,5 @@ export default defineEventHandler(async (event) => {
   if (!row) return fail('storage not found', 404)
   let addition = {}
   try { addition = JSON.parse(row.addition || '{}') } catch { return fail('storage addition is invalid JSON', 500) }
-  return ok({ ...row, addition, disabled: !!row.disabled, disable_index: !!row.disableIndex, enable_sign: !!row.enableSign, web_proxy: !!row.webProxy, proxy_range: !!row.proxyRange, down_proxy_sign: !!row.downProxySign })
+  return ok({ ...row, mount_path: row.mountPath, addition, disabled: !!row.disabled, disable_index: !!row.disableIndex, enable_sign: !!row.enableSign, web_proxy: !!row.webProxy, proxy_range: !!row.proxyRange, down_proxy_sign: !!row.downProxySign })
 })
