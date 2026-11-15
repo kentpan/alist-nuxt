@@ -304,7 +304,7 @@ export async function validateLocalAddition(addition: Record<string, unknown>): 
   }
 }
 
-export async function resolveStorage(db: DatabaseAdapter, virtualPath: string, credentialsKey = ''): Promise<ResolvedStorage> {
+// WebDAV secrets are decrypted only in-memory at the adapter boundary; the key comes from runtime config.\nexport async function resolveStorage(db: DatabaseAdapter, virtualPath: string, credentialsKey = ''): Promise<ResolvedStorage> {
   const normalized = cleanPath(virtualPath)
   const rows = await db.all<StorageRow>('SELECT * FROM Storage WHERE disabled = 0 ORDER BY LENGTH(mountPath) DESC, "order" ASC, id ASC')
   const storage = rows.find(row => isSubPath(normalizeMountPath(row.mountPath), normalized))
