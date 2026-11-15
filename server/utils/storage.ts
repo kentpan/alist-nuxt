@@ -364,12 +364,18 @@ async function safeLocalPath(rootPath: string, relativePath: string, allowMissin
 }
 
 export async function localStat(resolved: ResolvedStorage) {
+  if (resolved.remote) {
+    const item = await resolved.remote.get(resolved.virtualPath)
+    const date = new Date(item.modified)
+    return { actualPath: '', stat: { size: item.size, mtime: date, birthtime: new Date(item.created), isDirectory: () => item.is_dir, isFile: () => !item.is_dir } }
+  }
   const { fs } = await nodeModules()
   const actualPath = await safeLocalPath(resolved.rootPath, resolved.relativePath, false)
   return { actualPath, stat: await fs.stat(actualPath) }
 }
 
 export async function localList(resolved: ResolvedStorage): Promise<Array<{ name: string; size: number; isDir: boolean; modified: Date; created: Date }>> {
+  if (resolved.remote) return (await resolved.remote.list(resolved.virtualPath)).map(item => ({ name: item.name, size: item.size, isDir: item.is_dir, modified: new Date(item.modified), created: new Date(item.created) }))
   const { fs, path } = await nodeModules()
   const dirPath = await safeLocalPath(resolved.rootPath, resolved.relativePath, false)
   const addition = JSON.parse(resolved.storage.addition || '{}') as Record<string, unknown>
@@ -403,12 +409,14 @@ export async function localList(resolved: ResolvedStorage): Promise<Array<{ name
 }
 
 export async function localMkdir(resolved: ResolvedStorage): Promise<void> {
+  if (resolved.remote) { await resolved.remote.makeDir(resolved.virtualPath); return }
   const { fs } = await nodeModules()
   const target = await safeLocalPath(resolved.rootPath, resolved.relativePath, true)
   await fs.mkdir(target, { recursive: false })
 }
 
 export async function localRename(resolved: ResolvedStorage, newName: string, overwrite = false): Promise<void> {
+  if (resolved.remote) { await resolved.remote.rename(resolved.virtualPath, newName); return }
   const { fs, path } = await nodeModules()
   validateNameComponent(newName)
   if (resolved.relativePath && resolved.relativePath.split('/').pop() === newName) return
@@ -425,6 +433,13 @@ export async function localRename(resolved: ResolvedStorage, newName: string, ov
 }
 
 export async function localMove(db: DatabaseAdapter, sourcePath: string, destinationDir: string, name: string, overwrite = false): Promise<void> {
+  const sourceResolved = await resolveStorage(db, sourcePath)
+  const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name))
+  if (sourceResolved.remote || destinationResolved.remote) {
+    if (!sourceResolved.remote || !destinationResolved.remote || sourceResolved.storage.id !== destinationResolved.storage.id) throw new StorageError('Cross-storage move involving WebDAV is not supported yet', 501)
+    await sourceResolved.remote.move(sourcePath, destinationDir)
+    return
+  }
   const { fs, path } = await nodeModules()
   validateNameComponent(name)
   const source = await resolveStorage(db, sourcePath)
@@ -446,6 +461,13 @@ export async function localMove(db: DatabaseAdapter, sourcePath: string, destina
 }
 
 export async function localCopy(db: DatabaseAdapter, sourcePath: string, destinationDir: string, name: string, overwrite = false): Promise<void> {
+  const sourceResolved = await resolveStorage(db, sourcePath)
+  const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name))
+  if (sourceResolved.remote || destinationResolved.remote) {
+    if (!sourceResolved.remote || !destinationResolved.remote || sourceResolved.storage.id !== destinationResolved.storage.id) throw new StorageError('Cross-storage copy involving WebDAV is not supported yet', 501)
+    await sourceResolved.remote.copy(sourcePath, destinationDir, overwrite)
+    return
+  }
   const { fs, path } = await nodeModules()
   validateNameComponent(name)
   const source = await resolveStorage(db, sourcePath)
@@ -462,6 +484,7 @@ export async function localCopy(db: DatabaseAdapter, sourcePath: string, destina
 }
 
 export async function localRemove(resolved: ResolvedStorage): Promise<void> {
+  if (resolved.remote) { await resolved.remote.remove(resolved.virtualPath); return }
   const { fs } = await nodeModules()
   if (!resolved.relativePath) throw new StorageError('cannot remove a storage root', 403)
   const target = await safeLocalPath(resolved.rootPath, resolved.relativePath, false)
@@ -473,11 +496,26 @@ export async function localWritePath(resolved: ResolvedStorage): Promise<string>
 }
 
 export async function localReadPath(resolved: ResolvedStorage): Promise<string> {
+  if (resolved.remote) throw new StorageError('Use openStorageRead for WebDAV resources', 501)
   const { actualPath } = await localStat(resolved)
   return actualPath
 }
 
 export async function localSearch(resolved: ResolvedStorage, keyword: string, maxResults = 500) {
+  if (resolved.remote) {
+    const found: Array<{ path: string; name: string; size: number; is_dir: boolean; modified: Date }> = []
+    const queue = [resolved.virtualPath]
+    while (queue.length && found.length < maxResults) {
+      const current = queue.shift()!
+      const entries = await resolved.remote.list(current)
+      for (const entry of entries) {
+        if (entry.is_dir) queue.push(entry.path)
+        if (entry.name.toLowerCase().includes(keyword.toLowerCase())) found.push({ path: entry.path, name: entry.name, size: entry.size, is_dir: entry.is_dir, modified: new Date(entry.modified) })
+        if (found.length >= maxResults) break
+      }
+    }
+    return found
+  }
   const { fs, path } = await nodeModules()
   const root = await safeLocalPath(resolved.rootPath, resolved.relativePath, false)
   const found: Array<{ path: string; name: string; size: number; is_dir: boolean; modified: Date }> = []
