@@ -26,6 +26,10 @@ const renameName = ref('')
 const destinationPath = ref('/local')
 const localRoot = ref('/tmp/alist-nuxt-storage')
 const mountPath = ref('/local')
+const storageDriver = ref<'Local' | 'WebDav'>('Local')
+const webDavUrl = ref('https://')
+const webDavUsername = ref('')
+const webDavPassword = ref('')
 const busy = ref(false)
 const error = ref('')
 const notice = ref('')
@@ -219,14 +223,19 @@ async function removeSelected() {
   finally { busy.value = false }
 }
 
-async function addLocalStorage() {
+async function addStorage() {
   busy.value = true
+  error.value = ''
   try {
+    const addition = storageDriver.value === 'Local'
+      ? { root_path: localRoot.value, show_hidden: false }
+      : { url: webDavUrl.value.trim(), username: webDavUsername.value.trim(), password: webDavPassword.value }
     await api('/api/admin/storage/create', {
       method: 'POST',
-      body: { mount_path: mountPath.value, driver: 'Local', addition: { root_path: localRoot.value, show_hidden: false } }
+      body: { mount_path: mountPath.value, driver: storageDriver.value, addition }
     })
-    notice.value = '本地存储已添加'
+    notice.value = storageDriver.value === 'Local' ? '本地存储已添加' : 'WebDAV 存储已添加'
+    webDavPassword.value = ''
     await loadFiles(mountPath.value)
   } catch (cause: any) { error.value = cause?.message || '添加存储失败' }
   finally { busy.value = false }
@@ -275,17 +284,35 @@ onMounted(() => {
       </section>
 
       <section v-if="error.includes('No enabled storage')" class="rounded-xl border border-amber-200 bg-amber-50 p-5">
-        <h2 class="font-semibold text-amber-900">还没有配置本地存储</h2>
-        <p class="mt-1 text-sm text-amber-800">请指定服务端可访问的目录。此操作只配置当前运行环境，不会连接生产存储。</p>
+        <h2 class="font-semibold text-amber-900">还没有配置存储</h2>
+        <p class="mt-1 text-sm text-amber-800">请选择存储类型并填写当前隔离运行环境的配置。不会连接生产存储或服务。</p>
         <div class="mt-4 grid gap-3 md:grid-cols-2">
           <label class="text-sm font-medium text-amber-900">挂载路径
             <input v-model="mountPath" class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
           </label>
-          <label class="text-sm font-medium text-amber-900">服务端目录
+          <label class="text-sm font-medium text-amber-900">存储类型
+            <select v-model="storageDriver" class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
+              <option value="Local">本地文件系统</option>
+              <option value="WebDav">WebDAV</option>
+            </select>
+          </label>
+          <label v-if="storageDriver === 'Local'" class="text-sm font-medium text-amber-900 md:col-span-2">服务端目录
             <input v-model="localRoot" class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
           </label>
+          <template v-else>
+            <label class="text-sm font-medium text-amber-900 md:col-span-2">WebDAV 地址（HTTPS）
+              <input v-model="webDavUrl" type="url" placeholder="https://dav.example.com/remote.php/dav/files/user/" class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
+            </label>
+            <label class="text-sm font-medium text-amber-900">用户名
+              <input v-model="webDavUsername" autocomplete="username" class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
+            </label>
+            <label class="text-sm font-medium text-amber-900">密码
+              <input v-model="webDavPassword" type="password" autocomplete="new-password" class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
+            </label>
+            <p class="text-xs text-amber-800 md:col-span-2">保存账号密码前，服务端必须配置 STORAGE_CREDENTIALS_KEY（至少 32 个字符）。当前 WebDAV 适配器仍处于实验阶段，请勿填入生产凭据。</p>
+          </template>
         </div>
-        <button class="mt-3 rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white" :disabled="busy" @click="addLocalStorage">添加本地存储</button>
+        <button class="mt-3 rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white" :disabled="busy" @click="addStorage">{{ storageDriver === 'Local' ? '添加本地存储' : '添加 WebDAV 存储' }}</button>
       </section>
 
       <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
