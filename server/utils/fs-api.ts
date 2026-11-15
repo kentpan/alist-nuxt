@@ -12,9 +12,9 @@ export async function fsContext(event: H3Event, requestPath: string, permissionB
   catch (error: any) { return { response: fail(error.message, 403) } as const }
   if (!canReadPath(auth.roles, virtualPath)) return { response: fail('permission denied for path', 403) } as const
   if (permissionBit !== undefined && !hasPermission(mergeRolePermissions(auth.roles, virtualPath), permissionBit)) return { response: fail('operation is not permitted for this path', 403) } as const
-  if (!(event as any).node?.req) return { response: fail('Local filesystem storage is supported only by the Node runtime; no remote driver is active in this runtime', 501) } as const
   try {
     const resolved = await resolveStorage(auth.db, virtualPath)
+    if (!(event as any).node?.req && !resolved.remote) return { response: fail('Local filesystem storage is supported only by the Node runtime', 501) } as const
     return { auth, virtualPath, resolved } as const
   } catch (error: any) {
     if (error instanceof StorageError) return { response: fail(error.message, error.statusCode) } as const
