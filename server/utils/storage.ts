@@ -312,7 +312,8 @@ export async function resolveStorage(db: DatabaseAdapter, virtualPath: string): 
   let addition: Record<string, unknown>
   try { addition = JSON.parse(storage.addition || '{}') } catch { throw new StorageError(`Storage ${storage.mountPath} has invalid addition JSON`, 500) }
   const mountPath = normalizeMountPath(storage.mountPath)
-  const relativePath = normalized === mountPath ? '' : (mountPath === '/' ? normalized.slice(1) : normalized.slice(mountPath.length).replace(/^\\//, ''))
+  const mountRemainder = normalized.slice(mountPath.length)
+  const relativePath = normalized === mountPath ? '' : (mountPath === '/' ? normalized.slice(1) : (mountRemainder.startsWith('/') ? mountRemainder.slice(1) : mountRemainder))
   if (storage.driver.toLowerCase() === 'webdav') {
     const url = String(addition.url ?? addition.address ?? '')
     if (!url) throw new StorageError('WebDAV storage requires addition.url', 400)
