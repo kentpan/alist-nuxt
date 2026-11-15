@@ -59,8 +59,8 @@ jobs:
           npm run db:seed
       - name: Start local server and exercise real auth APIs
         env:
-          DATABASE_PATH: ./data/ci.db
-          JWT_SECRET: stage2-ci-only-jwt-secret
+          NUXT_DATABASE_PATH: ./data/ci.db
+          NUXT_JWT_SECRET: stage2-ci-only-jwt-secret
           BOOTSTRAP_ADMIN_PASSWORD: stage2-ci-only-password
           NITRO_HOST: 127.0.0.1
           NITRO_PORT: 3000
