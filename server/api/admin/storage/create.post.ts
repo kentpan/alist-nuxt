@@ -1,5 +1,6 @@
 import { fail, ok, requireAdmin } from '../../../utils/auth'
 import { normalizeMountPath, validateLocalAddition, validateWebDavAddition } from '../../../utils/storage'
+import { protectWebDavAddition } from '../../../utils/credential-crypto'
 
 export default defineEventHandler(async (event) => {
   const context = await requireAdmin(event)
@@ -23,9 +24,14 @@ export default defineEventHandler(async (event) => {
       await validateLocalAddition(addition)
     } else validateWebDavAddition(addition)
   } catch (error: any) { return fail(error.message, error.statusCode ?? 400) }
+  let storedAddition = addition
+  if (requestedDriver === 'webdav') {
+    try { storedAddition = await protectWebDavAddition(addition, useRuntimeConfig(event).storageCredentialsKey) }
+    catch (error: any) { return fail(error.message || 'Unable to protect WebDAV credentials', 400) }
+  }
   const now = new Date().toISOString()
   const values = [
-    mountPath, driver, JSON.stringify(addition), Number(body.order ?? 0), body.disabled ? 1 : 0,
+    mountPath, driver, JSON.stringify(storedAddition), Number(body.order ?? 0), body.disabled ? 1 : 0,
     Number(body.cache_expiration ?? 30), 'work', String(body.remark ?? ''), now,
     body.disable_index ? 1 : 0, body.enable_sign ? 1 : 0,
     String(body.order_by ?? ''), String(body.order_direction ?? ''), String(body.extract_folder ?? ''),
