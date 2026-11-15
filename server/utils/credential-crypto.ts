@@ -1,3 +1,4 @@
+// Versioned AES-GCM envelope; keep the prefix stable for explicit key/format migrations.
 const PREFIX = 'enc:v1:'
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
