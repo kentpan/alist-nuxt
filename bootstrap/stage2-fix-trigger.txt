@@ -1,1 +1,1 @@
-Retry Stage 2: set NUXT_DATABASE_PATH and NUXT_JWT_SECRET so Nitro runtime connects to the isolated migrated database and signing secret.
+Retry Stage 2 after moving the current-user API to the route index.
