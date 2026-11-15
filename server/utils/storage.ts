@@ -452,9 +452,9 @@ export async function localRename(resolved: ResolvedStorage, newName: string, ov
   await fs.rename(source, destination)
 }
 
-export async function localMove(db: DatabaseAdapter, sourcePath: string, destinationDir: string, name: string, overwrite = false): Promise<void> {
-  const sourceResolved = await resolveStorage(db, sourcePath)
-  const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name))
+export async function localMove(db: DatabaseAdapter, sourcePath: string, destinationDir: string, name: string, overwrite = false, credentialsKey = ''): Promise<void> {
+  const sourceResolved = await resolveStorage(db, sourcePath, credentialsKey)
+  const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name), credentialsKey)
   if (sourceResolved.remote || destinationResolved.remote) {
     if (!sourceResolved.relativePath) throw new StorageError('cannot move a storage root', 403)
     if (!sourceResolved.remote || !destinationResolved.remote || sourceResolved.storage.id !== destinationResolved.storage.id) throw new StorageError('Cross-storage move involving WebDAV is not supported yet', 501)
@@ -463,10 +463,10 @@ export async function localMove(db: DatabaseAdapter, sourcePath: string, destina
   }
   const { fs, path } = await nodeModules()
   validateNameComponent(name)
-  const source = await resolveStorage(db, sourcePath)
-  const destination = await resolveStorage(db, path.posix.join(destinationDir, name))
+  const source = await resolveStorage(db, sourcePath, credentialsKey)
+  const destination = await resolveStorage(db, path.posix.join(destinationDir, name), credentialsKey)
   if (source.storage.id !== destination.storage.id) {
-    await localCopy(db, sourcePath, destinationDir, name, overwrite)
+    await localCopy(db, sourcePath, destinationDir, name, overwrite, credentialsKey)
     await localRemove(source)
     return
   }
@@ -481,9 +481,9 @@ export async function localMove(db: DatabaseAdapter, sourcePath: string, destina
   await fs.rename(src, dst)
 }
 
-export async function localCopy(db: DatabaseAdapter, sourcePath: string, destinationDir: string, name: string, overwrite = false): Promise<void> {
-  const sourceResolved = await resolveStorage(db, sourcePath)
-  const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name))
+export async function localCopy(db: DatabaseAdapter, sourcePath: string, destinationDir: string, name: string, overwrite = false, credentialsKey = ''): Promise<void> {
+  const sourceResolved = await resolveStorage(db, sourcePath, credentialsKey)
+  const destinationResolved = await resolveStorage(db, pathJoin(destinationDir, name), credentialsKey)
   if (sourceResolved.remote || destinationResolved.remote) {
     if (!sourceResolved.relativePath) throw new StorageError('cannot copy a storage root', 403)
     if (!sourceResolved.remote || !destinationResolved.remote || sourceResolved.storage.id !== destinationResolved.storage.id) throw new StorageError('Cross-storage copy involving WebDAV is not supported yet', 501)
