@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict'
+// Isolated loopback-only WebDAV endpoint; this smoke test never calls an external provider.\nimport assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 
 const base = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:3000'
