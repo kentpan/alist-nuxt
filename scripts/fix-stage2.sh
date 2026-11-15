@@ -9,4 +9,5 @@ node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('tsconfig.js
 mkdir -p server/routes/api
 if [ -f server/api/me.get.ts ]; then mv server/api/me.get.ts server/routes/api/me.get.ts; fi
 if [ -f server/api/me/index.get.ts ]; then mv server/api/me/index.get.ts server/routes/api/me.get.ts; fi
+sed -i "s|from '../utils/auth'|from '../../utils/auth'|" server/routes/api/me.get.ts
 bash scripts/fix-sql.sh
