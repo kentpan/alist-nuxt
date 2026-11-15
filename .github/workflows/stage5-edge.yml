@@ -107,6 +107,17 @@ jobs:
           mkdir -p data
           npm run db:migrate
           npm run db:seed
+      - name: Start disposable Apache WebDAV provider
+        run: |
+          set -euo pipefail
+          docker run --detach --rm --name alist-webdav-ci --publish 127.0.0.1:8765:80 \
+            --env AUTH_TYPE=Basic --env USERNAME=stage6-ci --env PASSWORD=stage6-ci-only-password \
+            bytemark/webdav:2.4
+          for attempt in $(seq 1 30); do
+            if curl -fsS -u stage6-ci:stage6-ci-only-password -X PROPFIND -H 'Depth: 0' http://127.0.0.1:8765/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS -u stage6-ci:stage6-ci-only-password -X PROPFIND -H 'Depth: 0' http://127.0.0.1:8765/ >/dev/null
       - name: Exercise APIs and browser preview
         env:
           DATABASE_PATH: ./data/ci.db
@@ -114,6 +125,9 @@ jobs:
           JWT_SECRET: stage5-ci-only-jwt-secret
           NUXT_JWT_SECRET: stage5-ci-only-jwt-secret
           NUXT_STORAGE_CREDENTIALS_KEY: stage5-ci-only-webdav-key-with-at-least-32-characters
+          WEBDAV_EXTERNAL_URL: http://127.0.0.1:8765/
+          WEBDAV_USERNAME: stage6-ci
+          WEBDAV_PASSWORD: stage6-ci-only-password
           BOOTSTRAP_ADMIN_PASSWORD: stage5-ci-only-password
           ALLOW_REGISTER: 'true'
           LOCAL_STORAGE_ROOT: ./data/storage
@@ -123,7 +137,7 @@ jobs:
           set -euo pipefail
           node .output/server/index.mjs > /tmp/alist-stage5-server.log 2>&1 &
           server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/alist-stage5-server.log' EXIT
+          trap 'kill "$server_pid" 2>/dev/null || true; docker stop alist-webdav-ci >/dev/null 2>&1 || true; cat /tmp/alist-stage5-server.log' EXIT
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then break; fi
             sleep 1
