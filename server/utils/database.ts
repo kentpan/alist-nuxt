@@ -1,3 +1,5 @@
+import type { H3Event } from 'h3'
+
 export interface SqlResult<T = Record<string, unknown>> {
   rows: T[]
   changes: number
@@ -10,7 +12,7 @@ export interface DatabaseAdapter {
   batch(statements: Array<{ sql: string; params?: unknown[] }>): Promise<SqlResult[]>
 }
 type D1DatabaseLike = {
-  prepare(sql: string): { bind(...values: unknown[]): any; all<T = Record<string, unknown>>(): Promise<{ results?: T[] }>; first<T = Record<string, unknown>>(): Promise<T | null>; run(): Promise<{ meta?: { changes?: number; last_row_id?: number } }> }
+  prepare(sql: string): { bind(...values: unknown[]): any; all(): Promise<{ results?: Record<string, unknown>[] }>; first(): Promise<Record<string, unknown> | null>; run(): Promise<{ meta?: { changes?: number; last_row_id?: number } }> }
   batch<T = unknown>(statements: unknown[]): Promise<T[]>
 }
 function isD1(value: unknown): value is D1DatabaseLike {
@@ -21,11 +23,11 @@ export async function createDatabase(options: { d1?: unknown; databasePath: stri
     const d1 = options.d1
     return {
       async all<T>(sql: string, params: unknown[] = []) {
-        const result = await d1.prepare(sql).bind(...params).all<T>()
-        return result.results ?? []
+        const result = await d1.prepare(sql).bind(...params).all()
+        return (result.results ?? []) as T[]
       },
       first<T>(sql: string, params: unknown[] = []) {
-        return d1.prepare(sql).bind(...params).first<T>()
+        return d1.prepare(sql).bind(...params).first() as Promise<T | null>
       },
       async run(sql: string, params: unknown[] = []) {
         const result = await d1.prepare(sql).bind(...params).run()
@@ -48,20 +50,20 @@ export async function createDatabase(options: { d1?: unknown; databasePath: stri
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
   return {
     async all<T>(sql: string, params: unknown[] = []) {
-      return db.prepare(sql).all(...params) as T[]
+      return db.prepare(sql).all(...(params as any[])) as T[]
     },
     async first<T>(sql: string, params: unknown[] = []) {
-      return (db.prepare(sql).get(...params) as T | undefined) ?? null
+      return (db.prepare(sql).get(...(params as any[])) as T | undefined) ?? null
     },
     async run(sql: string, params: unknown[] = []) {
-      const result = db.prepare(sql).run(...params)
+      const result = db.prepare(sql).run(...(params as any[]))
       return { rows: [], changes: Number(result.changes), lastInsertRowid: result.lastInsertRowid }
     },
     async batch(items) {
       db.exec('BEGIN IMMEDIATE')
       try {
         const results = items.map(item => {
-          const result = db.prepare(item.sql).run(...(item.params ?? []))
+          const result = db.prepare(item.sql).run(...((item.params ?? []) as any[]))
           return { rows: [], changes: Number(result.changes), lastInsertRowid: result.lastInsertRowid }
         })
         db.exec('COMMIT')
