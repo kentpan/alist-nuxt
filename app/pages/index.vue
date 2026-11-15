@@ -6,6 +6,7 @@ type FileItem = {
   is_dir: boolean
   modified: string
   created: string
+  type?: number
 }
 
 type ApiResult<T> = { code: number; message?: string; data: T }
@@ -16,6 +17,11 @@ const password = ref('')
 const currentPath = ref('/local')
 const files = ref<FileItem[]>([])
 const selectedPath = ref('')
+const previewUrl = ref('')
+const previewType = ref(0)
+const previewName = ref('')
+const previewText = ref('')
+const previewError = ref('')
 const renameName = ref('')
 const destinationPath = ref('/local')
 const localRoot = ref('/tmp/alist-nuxt-storage')
@@ -24,6 +30,14 @@ const busy = ref(false)
 const error = ref('')
 const notice = ref('')
 const isLoggedIn = computed(() => Boolean(token.value))
+const previewKind = computed(() => {
+  if (previewType.value === 5) return 'image'
+  if (previewType.value === 2) return 'video'
+  if (previewType.value === 3) return 'audio'
+  if (previewType.value === 4) return 'text'
+  if (previewName.value.toLowerCase().endsWith('.pdf')) return 'pdf'
+  return 'download'
+})
 
 async function api<T>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const response = await fetch(path, {
@@ -77,6 +91,11 @@ async function loadFiles(path = currentPath.value) {
     currentPath.value = path
     files.value = result.content ?? []
     selectedPath.value = ''
+    previewUrl.value = ''
+    previewType.value = 0
+    previewName.value = ''
+    previewText.value = ''
+    previewError.value = ''
   } catch (cause: any) {
     error.value = cause?.message || '读取目录失败'
     files.value = []
@@ -85,10 +104,26 @@ async function loadFiles(path = currentPath.value) {
   }
 }
 
-function openItem(item: FileItem) {
+async function openItem(item: FileItem) {
   if (item.is_dir) return loadFiles(item.path)
   selectedPath.value = item.path
   renameName.value = item.name
+  previewName.value = item.name
+  previewUrl.value = ''
+  previewText.value = ''
+  previewError.value = ''
+  try {
+    const info = await api<{ raw_url: string; type: number }>('/api/fs/get', { method: 'POST', body: { path: item.path } })
+    previewUrl.value = info.raw_url
+    previewType.value = info.type
+    if (previewKind.value === 'text' && previewUrl.value) {
+      const response = await fetch(previewUrl.value)
+      if (!response.ok) throw new Error(`预览请求失败：${response.status}`)
+      previewText.value = (await response.text()).slice(0, 250000)
+    }
+  } catch (cause: any) {
+    previewError.value = cause?.message || '文件预览失败'
+  }
 }
 
 function goUp() {
@@ -293,6 +328,20 @@ onMounted(() => {
           <button class="rounded-lg border border-slate-300 px-3 py-2 text-sm" :disabled="busy" @click="moveSelected">移动</button>
           <button class="rounded-lg border border-rose-300 px-3 py-2 text-sm text-rose-700" :disabled="busy" @click="removeSelected">删除</button>
         </div>
+        <div v-if="previewUrl" class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h3 class="font-medium text-slate-800">文件预览：{{ previewName }}</h3>
+            <a class="text-sm text-indigo-700 underline" :href="previewUrl" target="_blank" rel="noreferrer">在新窗口打开</a>
+          </div>
+          <img v-if="previewKind === 'image'" :src="previewUrl" :alt="previewName" class="mx-auto max-h-[65vh] max-w-full rounded-lg object-contain">
+          <video v-else-if="previewKind === 'video'" :src="previewUrl" controls preload="metadata" class="max-h-[65vh] w-full rounded-lg bg-black" />
+          <audio v-else-if="previewKind === 'audio'" :src="previewUrl" controls preload="metadata" class="w-full" />
+          <iframe v-else-if="previewKind === 'pdf'" :src="previewUrl" :title="previewName" class="h-[65vh] w-full rounded-lg border-0 bg-white" />
+          <pre v-else-if="previewKind === 'text'" class="max-h-[65vh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-white p-4 text-sm text-slate-800">{{ previewText }}</pre>
+          <div v-else class="text-sm text-slate-600">此文件类型暂不支持内嵌预览。</div>
+          <p v-if="previewError" class="mt-2 text-sm text-rose-700">{{ previewError }}</p>
+        </div>
+        <p v-else-if="previewError" class="mt-4 text-sm text-rose-700">{{ previewError }}</p>
       </section>
     </template>
 
