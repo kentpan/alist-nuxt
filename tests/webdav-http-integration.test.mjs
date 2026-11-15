@@ -7,7 +7,7 @@ import { createWebDavAdapter } from '../server/utils/drivers/webdav.ts'
 test('WebDAV adapter interoperates with an isolated HTTP server over real fetch', async (t) => {
   const files = new Map([['/dav/root/hello.txt', Buffer.from('hello world')]])
   const directories = new Set(['/dav/root/'])
-  const requests: Array<{ method: string; path: string; range?: string }> = []
+  const requests = []
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1')
     const path = decodeURIComponent(url.pathname)
@@ -15,7 +15,7 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
     const body: Buffer[] = []
     for await (const chunk of req) body.push(Buffer.from(chunk))
     const data = Buffer.concat(body)
-    const send = (status: number, text = '') => { res.statusCode = status; res.end(text) }
+    const send = (status, text = '') => { res.statusCode = status; res.end(text) }
     if (req.method === 'PROPFIND') {
       const resources = req.headers.depth === '0' ? [path] : [path, ...[...files.keys(), ...directories].filter(item => item !== path && item.startsWith(path.endsWith('/') ? path : path + '/'))]
       const xml = resources.map(resource => {
@@ -65,7 +65,7 @@ test('WebDAV adapter interoperates with an isolated HTTP server over real fetch'
   })
   server.listen(0, '127.0.0.1')
   await once(server, 'listening')
-  t.after(() => new Promise<void>(resolve => server.close(() => resolve())))
+  t.after(() => new Promise(resolve => server.close(() => resolve())))
   const address = server.address()
   assert.ok(address && typeof address === 'object')
   const adapter = createWebDavAdapter({ mountPath: '/remote', url: `http://127.0.0.1:${address.port}/dav/root/` })
