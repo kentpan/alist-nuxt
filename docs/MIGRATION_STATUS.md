@@ -44,7 +44,7 @@
 
 ## Stage 6 — remaining upstream parity and release: in progress
 - WebDAV is now wired into storage resolution and the filesystem API for list/get/dirs, mkdir, raw and multipart upload, rename, same-mount move/copy, remove, recursive search, download and signed range-aware media streaming. The fetch-based adapter is compatible with Node and Edge runtimes; Edge requires D1 for metadata.
-- Mocked tests cover WebDAV listing/metadata, URL encoding, mount confinement, auth failures, PUT, MOVE, COPY, range GET, configuration validation and storage resolver dispatch. Node/Edge build and unit/type checks are part of CI; no real WebDAV server or production credentials are used.
+- Mocked tests cover WebDAV listing/metadata, URL encoding, mount confinement, auth failures, PUT, MOVE, COPY, range GET, configuration validation and storage resolver dispatch. An additional Node integration test now starts an isolated loopback HTTP server and exercises real fetch-based PROPFIND, MKCOL, PUT, GET/range, COPY, MOVE and DELETE requests; this test passed in CI on commit `5c68d4e367353ab8e3d1a4ecef399ee8d6f6d68e`. The full CI build is still running; no real external WebDAV server or production credentials are used.
 - WebDAV remains experimental: no admin UI form, cross-storage move/copy, credential encryption at rest, real-provider interoperability matrix or end-to-end D1+WebDAV Edge test yet. Do not store production credentials in the current plaintext addition JSON.
 - Next: secure provider credentials, add a real isolated WebDAV integration server and browser configuration UI, then S3, archive/task/share/admin parity.
 - Archive listing/extraction, offline download/task queue, shares, full admin settings/index/labels/message/FRP features.
