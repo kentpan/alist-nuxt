@@ -28,13 +28,6 @@ assert.equal(root.data.provider, 'local')
 await api('/api/fs/mkdir', { method: 'POST', token, body: { path: '/stage3' } })
 await api('/api/fs/mkdir', { method: 'POST', token, body: { path: '/copies' } })
 await api('/api/fs/mkdir', { method: 'POST', token, body: { path: '/archive' } })
-await api('/api/fs/put', {
-  method: 'POST',
-  token,
-  headers: { 'File-Path': encodeURIComponent('/stage3/hello.txt'), 'Content-Type': 'text/plain', Overwrite: 'false' },
-  body: undefined
-}).catch(error => { throw error })
-
 const uploadResponse = await fetch(`${base}/api/fs/put`, {
   method: 'POST',
   headers: { authorization: token, 'client-id': 'stage3-storage-ci', 'File-Path': encodeURIComponent('/stage3/hello.txt'), 'Content-Type': 'text/plain', Overwrite: 'false' },
